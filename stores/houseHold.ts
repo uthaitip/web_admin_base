@@ -29,13 +29,8 @@ export const useHouseholdStore = defineStore('households', {
     async getHouseHoldList(requestData: BaseRequestData<HouseHoldListRequest> = {}) {
       try {
         this.$patch(loadingState(requestData));
-
         const httpClient = useHttpClient();
-        console.log('Store: requestData.query', requestData)
-
         const response = await httpClient.get(API_ENDPOINTS.HOUSEHOLDS.LIST, requestData.query);
-
-        console.log('Store: API response', response);
 
         this.list = [...(response?.data || [])];
         this.pagination = { ...(response?.pagination || {}) };
@@ -45,21 +40,38 @@ export const useHouseholdStore = defineStore('households', {
 
         return response;
       } catch (error: any) {
-        console.error('Store: API error', error);
         this.$patch(errorState({ ...(error || {}) }))
         throw new BaseResponseError(error?.data || error);
       }
     },
 
-    async deleteUser(requestData: BaseRequestData<HouseHoldListRequest>) {
+    async deleteHousehold(requestData: BaseRequestData<HouseHoldListRequest>) {
       try {
         this.$patch(loadingState(requestData))
 
-        console.log( 'equestData.body!.id', requestData.body!.id );
-
         const httpClient = useHttpClient()
         const response = await httpClient.delete(
-          API_ENDPOINTS.HOUSEHOLDS.DELETE(requestData.body!.id)
+          API_ENDPOINTS.HOUSEHOLDS.DELETE(requestData!.id)
+        )
+
+        this.$patch(successState(response))
+        return response
+      } catch (error: any) {
+        this.$patch(errorState({ ...(error || {}) }))
+        throw new BaseResponseError(error?.data || error)
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    async updateHousehold(requestData: BaseRequestData<HouseHoldListRequest>) {
+      try {
+        this.$patch(loadingState(requestData))
+
+        const httpClient = useHttpClient()
+        const response = await httpClient.put(
+          API_ENDPOINTS.HOUSEHOLDS.UPDATE(requestData.body!.id),
+          requestData.body
         )
 
         this.$patch(successState(response))

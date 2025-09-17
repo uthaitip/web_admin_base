@@ -135,5 +135,57 @@
     "last_login": "เข้าสู่ระบบล่าสุด",
     "is_active": "ใช้งานอยู่",
     "avatar": "รูปโปรไฟล์"
+  },
+  "demo": {
+    "title": "หน้าตัวอย่าง",
+    "column": {
+      "houseCode": "รหัสประจำบ้าน",
+      "houseName": "ชื่อเจ้าของ",
+      "address": "ที่อยู่",
+      "houseUsage": "การใช้ไฟ",
+      "status": "สถานะ",
+      "actions": "จัดการ"
+    }, 
+    "search": "ค้นหา",
+    "status": "สถานะ",
+    "extension": "กรองตามพื้นที่",
+    "placeholderSearch": "ค้นหารหัสครัวเรือน ชื่อนามสกุล ที่อยู่",
+    "placeholderStatus": "กรุณาเลือกสถานะ",
+    "placeholderExtension": "กรุณาเลือกพื้นที่",
+    "options": {
+      "option1": "ตัวเลือก 1"
+    },
+    "statusOptions": {
+      "all": "ทั้งหมด",
+      "active": "ใช้งาน",
+      "inactive": "ไม่ใช้งาน",
+      "pending": "รอดำเนินการ",
+      "suspended": "ระงับการใช้งาน"
+    },
+    "btn": {
+      "create": "เพิ่มรายการ"
+    },
+    "modalDemo": {
+      "titleCreate": "เพิ่่มรายการ",
+      "titleUpdate": "แก้ไขรายการ",
+      "save": "บันทึก",
+      "cancel": "ยกเลิก"
+    },
+    "demoForm": {
+      "fistName": "ชื่อ",
+      "lastName": "นามสกุล",
+      "houseUsage": "การใช้ไฟ",
+      "extension": "พื้นที่",
+      "address": "ที่อยู่",
+      "status": "สถานะ",
+      "placeholderExtension": "กรุณาเลือกพื้นที่",
+      "placeholderStatus": "กรุณาเลือกสถานะ",
+      "placeholderFirstName": "กรุณากรอกชื่อ",
+      "placeholderLastName": "กรุณากรอกนามสกุล",
+      "placeholderHouseUsage": "กรุณากรอกการใช้ไฟ",
+      "placeholderAddress": "กรุณากรอกที่อยู่",
+      "btnOK": "ตกลง",
+      "btnCancel": "ยกเลิก"
+    }
   }
 }

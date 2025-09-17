@@ -10,8 +10,21 @@ export default defineEventHandler(async (event) => {
         await connectMongoDB()
 
         const id = getRouterParam(event, 'id')
-        console.log('id', id);
+        const role = await Household.findById(id)
+        if (!role) {
+            throw createPredefinedError('NOT_FOUND')
+        }
+
+        const usersWithRole = await Household.countDocuments({ roles: id })
+        if (usersWithRole > 0) {
+            throw createPredefinedError('INVALID_INPUT', {
+                details: 'not found'
+            })
+        }
+
+        await Household.findByIdAndDelete(id)
+        return createSuccessResponseWithMessages({})
     } catch (error) {
-        
+
     }
 })

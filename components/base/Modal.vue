@@ -9,7 +9,7 @@
     <!-- Modal Content -->
     <div :class="modalClasses" @click.stop>
       <!-- Modal Header -->
-      <div v-if="title || closeable" class="flex items-center justify-between p-6 border-b border-base-300">
+      <div v-if="title || closeable" :class="!closeable ? 'flex justify-center items-center p-6 border-b border-base-300' : 'flex items-center justify-between p-6 border-b border-base-300'">
         <h3 class="text-lg font-bold" v-if="title">{{ title }}</h3>
         <div v-else></div>
         

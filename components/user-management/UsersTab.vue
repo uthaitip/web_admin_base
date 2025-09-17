@@ -284,7 +284,6 @@ const fetchUsers = async () => {
 
     // Add role filter if selected
     if (roleFilter.value) {
-      console.log('Role filter:', roleFilter.value)
       filterObj.roles = roleFilter.value
     }
 

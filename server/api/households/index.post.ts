@@ -26,7 +26,6 @@ export default defineEventHandler(async (event) => {
         .select('_id firstName lastName address houseUsage isActive status createdAt updatedAt')
         .sort({ createdAt: -1 });
     
-    console.log('houseHold', houseHold);
     let houseCode = ""
 
     if(houseHold.length > 0) {
@@ -47,7 +46,6 @@ export default defineEventHandler(async (event) => {
       status: body.status || 'active'
     }
 
-    console.log('householdData', householdData);
 
     // Create and save new household to MongoDB
     const newHousehold = new Household(householdData)

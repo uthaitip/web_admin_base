@@ -1,19 +1,19 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-4">
-      <h1 class="text-2xl font-bold">Demo Page</h1>
-      <BaseButton @click="openModal" variant="primary">เพิ่มรายการ</BaseButton>
+      <h1 class="text-2xl font-bold">{{ t('demo.title')}}</h1>
+      <BaseButton @click="openModal" variant="primary">{{ t("demo.btn.create") }}</BaseButton>
     </div>
 
-    <div class="grid grid-cols-3 border rounded-lg bg-white p-5 gap-4">
-      <div><BaseInput v-model="selectDemo.search" type="text" placeholder="ค้นหาครัวเรือน" label="ค้นหา" @input="handleSearch" /></div>
-      <div><BaseSelect v-model="selectDemo.basic" :options="selectOptions" label="กรองตามพื้นที่" /></div>
-      <div><BaseSelect v-model="selectDemo.status" :options="selectOptionStatus" label="สถานะ" @change="filterByStatus" /></div>
+    <div class="grid grid-cols-3 border rounded-lg bg-base-100 border-base-300 p-5 gap-4">
+      <div><BaseInput v-model="selectDemo.search" type="text" :placeholder="t('demo.placeholderSearch')" :label="t('demo.search')" @input="handleSearch" /></div>
+      <div><BaseSelect v-model="selectDemo.basic" :options="selectOptions" :label="t('demo.extension')" :placeholder="t('demo.placeholderExtension')" /></div>
+      <div><BaseSelect v-model="selectDemo.status" :options="selectOptionStatus" :label="t('demo.status')" :placeholder="t('demo.placeholderStatus')" @change="filterByStatus" /></div>
     </div>
 
     <!-- Table  -->
     <div class="rounded-lg overflow-hidden">
-      <BaseTable :data="paginationHouseHold ?? []" :columns="optionColumns" :showEdit="false" :showDelete="false"
+      <BaseTable :data="paginationHouseHold ?? []" :columns="optionColumns" :loading="loading" :showEdit="false" :showDelete="false"
         loading-text="Loading roles..." empty-title="No roles found" empty-text="There are no roles to display"
         empty-icon="users" striped >
         <template #houseName="{ row }">
@@ -21,7 +21,10 @@
         </template>
 
         <template #status="{ row }">
-          <div>{{ StatusText[row?.status] }}</div>
+          <div class="badge" :class="StatusColor[row?.status]">
+            {{ StatusText[row?.status] }}
+          </div>
+          <!-- <div>{{ StatusText[row?.status] }}</div> -->
         </template>
 
         <template #houseUsage="{ row }">
@@ -30,8 +33,8 @@
 
         <template #btn="{ row }">
           <div>
-            <BaseButton variant="link" size="sm" @click="openModal(row)">แก้ไข</BaseButton>
-            <BaseButton variant="link" size="sm" @click="onDelete(row)">ลบ</BaseButton>
+            <BaseButton @click="openModal(row)" variant="ghost" size="sm" icon-left="pencil" title="edit house hold" />
+            <BaseButton @click="onDelete(row)" variant="ghost" size="sm" icon-left="trash" title="delete hose hold" class="text-error hover:text-error" />
           </div>
         </template>
       </BaseTable>
@@ -41,36 +44,37 @@
           :total-items="pagination.total || 0"
           :per-page="pagination.limit || 10"
           :max-pages="5"
+          @change="handlePageChange"
         />
       </div>
     </div>
 
     <!-- Modal -->
 
-    <BaseModal v-model:visible="isModalVisible" title="เพิ่มรายการ" size="xl3">
+    <BaseModal v-model:visible="isModalVisible" :title="!formData?.id ? t('demo.modalDemo.titleCreate') : t('demo.modalDemo.titleUpdate')" :closeable="false" size="xl3">
      <div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <BaseInput 
             v-model="formData.firstName" 
             type="text" 
-            label="ชื่อ" 
-            placeholder="กรุณากรอกชื่อ..." 
+            :label="t('demo.demoForm.fistName')" 
+            :placeholder="t('demo.demoForm.placeholderFirstName')" 
             :error="formErrors.firstName"
             required 
           />
           <BaseInput 
             v-model="formData.lastName" 
             type="text" 
-            label="นามสกุล" 
-            placeholder="กรุณากรอกนามสกุล..." 
+            :label="t('demo.demoForm.lastName')" 
+            :placeholder="t('demo.demoForm.placeholderLastName')" 
             :error="formErrors.lastName"
             required 
           />
           <BaseInput 
             v-model="formData.houseUsage" 
             type="number" 
-            label="การใช้ไฟ (หน่วย)" 
-            placeholder="กรุณากรอกจำนวน..." 
+            :label="t('demo.demoForm.houseUsage')" 
+            :placeholder="t('demo.demoForm.placeholderHouseUsage')" 
             :error="formErrors.houseUsage"
             min="0" 
             max="999999" 
@@ -79,8 +83,8 @@
           <BaseInput 
             v-model="formData.address" 
             type="text" 
-            label="ที่อยู่" 
-            placeholder="กรุณากรอกที่อยู่" 
+            :label="t('demo.demoForm.address')" 
+            :placeholder="t('demo.demoForm.placeholderAddress')" 
             :error="formErrors.address"
             min="0" 
             max="999999" 
@@ -88,13 +92,25 @@
           />
         </div>
         <div class="flex justify-end gap-2 mt-6">
-          <BaseButton @click="closeModal" variant="secondary">ยกเลิก</BaseButton>
-          <BaseButton @click="submitForm" variant="primary" :disabled="!isFormValid">บันทึก</BaseButton>
+          <BaseButton @click="closeModal" variant="secondary">{{ t('demo.demoForm.btnCancel') }}</BaseButton>
+          <BaseButton @click="submitForm" variant="primary" :disabled="!isFormValid">{{ t('demo.demoForm.btnOK') }}</BaseButton>
         </div>
      </div>
     </BaseModal>
 
 
+    <BaseModal v-model:visible="modalConfrimDelete" title="ยืนยัน" size="sm" :closeable="false">
+      <p class="text-center">คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้</p>
+      <template #actions>
+        <div class="flex justify-center items-center gap-2">
+          <BaseButton @click="modalConfrimDelete = false">ยกเลิก</BaseButton>
+          <BaseButton variant="error" @click="deleteHousehold">ยืนยัน</BaseButton>
+        </div>
+      </template>
+    </BaseModal>
+
+    <BaseAlert v-model:visible="alertDemo.showSuccess" type="success" title="สำเร็จ!"
+    :message="titleAlertSuccess" position="top" :duration="3000" />
   </div>
 
 </template>
@@ -102,6 +118,8 @@
 <script setup>
 import { API_ENDPOINTS } from '~/composables/constants/api';
 import { useHouseholdStore } from '~/stores/houseHold';
+const { $i18n } = useNuxtApp()
+const { t } = useI18n()
 
 // store 
 const houseHoldStore = useHouseholdStore();
@@ -128,6 +146,13 @@ const StatusEnum = {
   SUSPENDED: 'suspended'
 }
 
+const StatusColor = {
+  [StatusEnum.ACTIVE]: 'badge-success',
+  [StatusEnum.INACTIVE]: 'badge-error',
+  [StatusEnum.PENDING]: 'badge-warning',
+  [StatusEnum.SUSPENDED]: 'badge-info'
+}
+
 // Status text mappings
 const StatusText = {
   [StatusEnum.ACTIVE]: 'ใช้งาน',
@@ -140,6 +165,7 @@ const StatusText = {
 //Reactive data
 // modal create form 
 const isCreateMode= ref(true);
+const dataConfirmDelete = ref(null);
 // option selection status and filter
 const modalCreateForm = ref({
   basic: false,
@@ -151,6 +177,19 @@ const modalCreateForm = ref({
   showLarge: false,
   showWithActions: false,
 });
+
+const alertDemo = ref({
+  showSuccess: false,
+  showError: false,
+  showWarning: false,
+  showInfo: false,
+  showConfirm: false,
+  confirmResult: ''
+})
+
+const titleAlertSuccess = ref('บันทึกข้อมูลเรียบร้อยแล้ว');
+
+const modalConfrimDelete = ref(false);
 
 // Computed property for modal visibility (better performance)
 const isModalVisible = computed({
@@ -245,6 +284,7 @@ const closeModal = () => {
   resetForm();
 }
 
+
 const resetForm = () => {
   formData.firstName = '';
   formData.lastName = '';
@@ -258,19 +298,30 @@ const resetForm = () => {
 
 
 const submitForm = async () => {
-  if (validateForm()) {
-    try {
-      const { post } = useApi();
-      await post(API_ENDPOINTS.HOUSEHOLDS.CREATE, formData);
-      
-      // Refresh data after successful creation
-      await getHouseholdList();
-      
-      closeModal();
-    } catch (error) {
-      console.error('Error creating household:', error);
+  if(formData?.id) {
+    await houseHoldStore.updateHousehold({
+      body: formData
+    });
+
+    titleAlertSuccess.value = "แก้ไขข้อมูลเรียบร้อยแล้ว";
+    alertDemo.value.showSuccess = true;
+    await getHouseholdList();
+    closeModal();
+    
+  } else {
+    if (validateForm()) {
+      try {
+        const { post } = useApi();
+        await post(API_ENDPOINTS.HOUSEHOLDS.CREATE, formData);
+        titleAlertSuccess.value = "บันทึกข้อมูลเรียบร้อยแล้ว";
+        alertDemo.value.showSuccess = true;
+        await getHouseholdList();
+        closeModal();
+      } catch (error) {
+      }
     }
   }
+
 }
 
 // Watch for real-time validation
@@ -294,34 +345,33 @@ watch(() => formData.houseUsage, () => {
 
 // Watch for data changes from store
 watch(() => houseHolds.value, (newData) => {
-  console.log('Store data updated:', newData);
 }, { deep: true })
 const selectOptions = ref([
   {
-  label: 'Option 1',
+  label: t('demo.options.option1'),
   value: 'opt1'
   }, 
 ]);
 
 const selectOptionStatus = ref([
   {
-    label: 'ทั้งหมด',
+    label: t('demo.statusOptions.all'),
     value: ''
   },
   {
-    label: 'ใช้งาน',
+    label: t('demo.statusOptions.active'),
     value: 'active'
   },
   {
-    label: 'ไม่ใช้งาน',
+    label: t('demo.statusOptions.inactive'),
     value: 'inactive'
   },
   {
-    label: 'รอดำเนินการ',
+    label: t('demo.statusOptions.pending'),
     value: 'pending'
   },
   {
-    label: 'ระงับการใช้งาน',
+    label: t('demo.statusOptions.suspended'),
     value: 'suspended'
   }
 ]);
@@ -330,29 +380,30 @@ const selectOptionStatus = ref([
 const optionColumns = ref([
   {
     key: 'houseCode',
-    label: 'รหัสครัวเรือน',
+    label: t("demo.column.houseCode"),
   },
   {
     key: 'houseName',
-    label: 'ชื่อเจ้าของ',
+    label: t("demo.column.houseName"),
   },
   {
     key: 'address',
-    label: 'ที่อยู่',
+    label: t("demo.column.address"),
   },
   {
     key: 'houseUsage',
-    label: 'การใช้ไฟ',
+    label: t("demo.column.houseUsage"),
   },
   {
     key: 'status',
-    label: 'สถานะ',
+    label: t("demo.column.status"),
   },
   {
     key: 'btn',
-    label: 'จัดการ',
+    label: t("demo.column.actions"),
   },
 ])
+
 const selectDemo = reactive({
   basic: '',
   status: '',
@@ -362,14 +413,12 @@ const selectDemo = reactive({
 
 
 // methods
-
 // call api get hosehold
 const getHouseholdList = async (filter = {}) => {
   try {
-   // Structure queryParams with nested objects
    const queryParams = {
      pagination: {
-       page: 1,
+       page: pagination.page  || 1,
        limit: 10
      },
      filter: {
@@ -378,20 +427,20 @@ const getHouseholdList = async (filter = {}) => {
      ...(filter.search && { search: filter.search })
    }
 
-   console.log('Sending query params to store:', queryParams);
-
    await houseHoldStore.getHouseHoldList({
      query: queryParams,
    })
 
   } catch (error) {
-       console.error('Error', error)
     if (error.status === 401) {
-      console.warn('get household fail')
-      
       return
     }
   }
+}
+
+const handlePageChange = async (page) => {
+  pagination.page = page;
+  await getHouseholdList();
 }
 
 const openModal = (row = null) => {
@@ -404,6 +453,7 @@ const openModal = (row = null) => {
     formData.houseUsage = row.houseUsage;
     formData.isActive = row.isActive;
     formData.status = row.status;
+    formData.id = row.id;
   } else {
     // Create mode - clear form
     isCreateMode.value = true;
@@ -414,12 +464,19 @@ const openModal = (row = null) => {
 }
 
 const onDelete = async (row) => {
-  console.log('row =======> ', row);
-  await houseHoldStore.deleteHousehold(row.id)
+  modalConfrimDelete.value  = true;
+  dataConfirmDelete.value = row;
 }
 
+const deleteHousehold = async () => {
+  await houseHoldStore.deleteHousehold({id: dataConfirmDelete.value.id});
+  modalConfrimDelete.value  = false;
+  dataConfirmDelete.value = null;
+  titleAlertSuccess.value = "ลบข้อมูลสำเร็จ";
+  alertDemo.value.showSuccess = true;
+  await getHouseholdList();
+}
 
-// Combined filter function that handles both status and search
 const applyFilters = async () => {
   const filters = {};
   
@@ -427,13 +484,10 @@ const applyFilters = async () => {
     filters.status = selectDemo.status;
   }
   
-  console.log('selectDemo = ', selectDemo);
   if (selectDemo?.search?.trim()) {
     filters.search = selectDemo.search.trim();
   }
 
-  console.log('Applying filters:', filters);
-  
   await getHouseholdList(filters);
 }
 

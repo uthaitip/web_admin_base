@@ -4,12 +4,14 @@ import Household from '~/models/Household'
 import { createPredefinedError, createSuccessResponseWithMessages } from '~/server/utils/responseHandler'
 import { createHouseholdFilterConfig } from '~/server/utils/filter_config/houseHoldManagement'
 import { parseQueryAndBuildFilter } from '~/server/utils/queryParser'
+import { getQuery } from 'h3'
 
 export default defineEventHandler(async (event) => {
   await connectMongoDB()
 
   try {
     const query = getQuery(event)
+    const decodedSearch = query?.search ? decodeURIComponent(query.search as string) : '';
 
     let parsedQuery, mongoFilter;
     
@@ -23,12 +25,12 @@ export default defineEventHandler(async (event) => {
           limit: parseInt(pagination.limit) || 10
         },
         filter: filter || {},
-        search: (query.search as string) || ''
+        search: decodedSearch
       };
       
       mongoFilter = {} as any;
       
-      // Handle search
+      
       if (parsedQuery.search) {
         mongoFilter.$or = [
           { firstName: { $regex: parsedQuery.search, $options: 'i' } },
@@ -37,31 +39,43 @@ export default defineEventHandler(async (event) => {
         ];
       }
       
-      // Handle filters
+      
       if (parsedQuery.filter.status) {
         mongoFilter.status = parsedQuery.filter.status;
       }
       
     } else {
-      // Handle flat bracket notation (fallback)
+      const modifiedQuery = { ...query, search: decodedSearch };
       const result = parseQueryAndBuildFilter(
-        query, 
+        modifiedQuery, 
         createHouseholdFilterConfig(),
         ['firstName', 'lastName', 'address' , 'houseCode']
       );
       parsedQuery = result.parsedQuery;
       mongoFilter = result.mongoFilter;
+      
+      parsedQuery.search = decodedSearch;
+      
+      if (decodedSearch) {
+        const searchFilter = {
+          $or: [
+            { firstName: { $regex: decodedSearch, $options: 'i' } },
+            { lastName: { $regex: decodedSearch, $options: 'i' } },
+            { address: { $regex: decodedSearch, $options: 'i' } },
+            { houseCode: { $regex: decodedSearch, $options: 'i' } }
+          ]
+        };
+        
+        if (Object.keys(mongoFilter).length > 0) {
+          mongoFilter = { $and: [mongoFilter, searchFilter] };
+        } else {
+          mongoFilter = searchFilter;
+        }
+      }
     }
     
     const { page, limit } = parsedQuery.pagination
     let filter = mongoFilter;
-    
-    console.log('API: parsedQuery', parsedQuery)
-    console.log('API: mongoFilter =>', filter);
-    
-    if (parsedQuery.search) {
-      console.log('API: Search term:', parsedQuery.search);
-    }
 
     const total = await Household.countDocuments(filter)
 

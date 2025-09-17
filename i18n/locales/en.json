@@ -135,5 +135,57 @@
     "last_login": "Last Login",
     "is_active": "Active",
     "avatar": "Avatar"
+  },
+  "demo": {
+    "title": "Demo Page",
+    "column": {
+      "houseCode": "House Code",
+      "houseName": "Owner Name",
+      "address": "Address",
+      "houseUsage": "Power Usage",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "search": "search",
+    "status": "status",
+    "extension": "extension",
+    "placeholderSearch": "search by house code, full name, address",
+    "placeholderStatus": "please select status",
+    "placeholderExtension": "plase select extension",
+    "options": {
+      "option1": "Option 1"
+    },
+    "statusOptions": {
+      "all": "All",
+      "active": "Active",
+      "inactive": "Inactive",
+      "pending": "Pending",
+      "suspended": "Suspended"
+    },
+    "btn": {
+      "create": "create"
+    },
+    "modalDemo": {
+      "titleCreate": "create item",
+      "titleUpdate": "edit item",
+      "save": "save",
+      "cancel": "cancle"
+    },
+    "demoForm": {
+      "fistName": "firstName",
+      "lastName": "lastName",
+      "houseUsage": "houseUsage",
+      "extension": "extension",
+      "address": "address",
+      "status": "stats",
+      "placeholderExtension": "plase select extension",
+      "placeholderStatus": "please select status",
+      "placeholderFirstName": "please enter first name",
+      "placeholderLastName": "please enter last name",
+      "placeholderHouseUsage": "please enter house usage",
+      "placeholderAddress": "please enter address",
+      "btnOK": "ok",
+      "btnCancel": "cancel"
+    }
   }
 }
