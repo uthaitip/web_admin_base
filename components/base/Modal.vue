@@ -76,7 +76,11 @@ const modalClasses = computed(() => {
     sm: 'w-full max-w-sm',
     md: 'w-full max-w-md',
     lg: 'w-full max-w-lg',
-    xl: 'w-full max-w-xl'
+    xl: 'w-full max-w-xl',
+    xl2: 'w-full max-w-2xl',
+    xl3: 'w-full max-w-3xl',
+    xl4: 'w-full max-w-4xl',
+    xl5: 'w-full max-w-5xl'
   }
   
   classes.push(sizeClasses[props.size])

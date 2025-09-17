@@ -141,3 +141,14 @@ export interface UserManagementResponse<T = any> {
   message?: string
   pagination?: PaginationInfo
 }
+
+export interface HouseHold {
+  id?: string
+  name?: string
+  address?: string
+  houseUsage?: number
+  isActive?: boolean
+  status?: string
+  createdAt?: Date
+  updatedAt?: Date
+}

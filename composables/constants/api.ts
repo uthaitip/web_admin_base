@@ -88,6 +88,15 @@ export const API_ENDPOINTS = {
     SECURITY: '/settings/security',
     NOTIFICATIONS: '/settings/notifications',
     UPDATE: '/settings'
+  },
+
+  // Households
+  HOUSEHOLDS: {
+    LIST: '/households',
+    SHOW: (id: string) => `/households/${id}`,
+    CREATE: '/households',
+    UPDATE: (id: string) => `/households/${id}`,
+    DELETE: (id: string) => `/households/${id}`
   }
 } as const
 

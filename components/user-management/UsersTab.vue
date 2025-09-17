@@ -284,6 +284,7 @@ const fetchUsers = async () => {
 
     // Add role filter if selected
     if (roleFilter.value) {
+      console.log('Role filter:', roleFilter.value)
       filterObj.roles = roleFilter.value
     }
 
@@ -299,7 +300,6 @@ const fetchUsers = async () => {
     })
   } catch (error: any) {
     console.error('Error fetching users:', error)
-
     // Handle authentication errors
     if (error.status === 401) {
       console.warn('Authentication required - redirecting to login')
