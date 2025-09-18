@@ -329,6 +329,11 @@ const menuSections = ref([
         icon: "server",
       },
       {
+        path: "/admin/simple",
+        label: "example",
+        icon: "server",
+      },
+      {
         path: "/admin/components",
         label: "Components",
         icon: "puzzle-piece",
