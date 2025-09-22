@@ -1,6 +1,6 @@
-import { connectMongoDB } from '~/lib/mongodb'
-import Household from '~/models/Household'
-import { createPredefinedError, createSuccessResponseWithMessages } from '~/server/utils/responseHandler'
+import { connectMongoDB } from '~/server/utils/mongodb'
+import Household from '~/server/models/Household'
+import { createPredefinedError, createSuccessResponse } from '~/server/utils/responseHandler'
 
 export default defineEventHandler(async (event) => {
   await connectMongoDB()
@@ -51,10 +51,7 @@ export default defineEventHandler(async (event) => {
     const newHousehold = new Household(householdData)
     const savedHousehold = await newHousehold.save()
 
-    return createSuccessResponseWithMessages({
-      data: savedHousehold,
-      message: 'Household created successfully'
-    })
+    return createSuccessResponse(savedHousehold)
 
     // return {}
   

@@ -5,14 +5,14 @@
       <BaseButton @click="openModal" variant="primary">{{ t("demo.btn.create") }}</BaseButton>
     </div>
 
-    <div class="grid grid-cols-3 border rounded-lg bg-base-100 border-base-300 p-5 gap-4">
+    <div class="grid grid-cols-3 border rounded-lg bg-base-100 border-base-300 p-5 gap-4 mb-6">
       <div><BaseInput v-model="selectDemo.search" type="text" :placeholder="t('demo.placeholderSearch')" :label="t('demo.search')" @input="handleSearch" /></div>
       <div><BaseSelect v-model="selectDemo.basic" :options="selectOptions" :label="t('demo.extension')" :placeholder="t('demo.placeholderExtension')" /></div>
       <div><BaseSelect v-model="selectDemo.status" :options="selectOptionStatus" :label="t('demo.status')" :placeholder="t('demo.placeholderStatus')" @change="filterByStatus" /></div>
     </div>
 
     <!-- Table  -->
-    <div class="rounded-lg overflow-hidden">
+    <div class="rounded-lg overflow-hidden border border-base-300">
       <BaseTable :data="paginationHouseHold ?? []" :columns="optionColumns" :loading="loading" :showEdit="false" :showDelete="false"
         loading-text="Loading roles..." empty-title="No roles found" empty-text="There are no roles to display"
         empty-icon="users" striped >
@@ -118,7 +118,6 @@
 <script setup>
 import { API_ENDPOINTS } from '~/composables/constants/api';
 import { useHouseholdStore } from '~/stores/houseHold';
-const { $i18n } = useNuxtApp()
 const { t } = useI18n()
 
 // store 
@@ -130,7 +129,7 @@ const houseHolds = computed(() => houseHoldStore.list || []);
 const pagination = computed(() => houseHoldStore.pagination || {});
 // Initialize
  onMounted(async () => {
-  await getHouseholdList();
+   await getHouseholdList();
 })
 
 // computed 
@@ -344,7 +343,8 @@ watch(() => formData.houseUsage, () => {
 })
 
 // Watch for data changes from store
-watch(() => houseHolds.value, (newData) => {
+watch(() => houseHolds.value, () => {
+  // Handle data changes if needed
 }, { deep: true })
 const selectOptions = ref([
   {
@@ -418,7 +418,7 @@ const getHouseholdList = async (filter = {}) => {
   try {
    const queryParams = {
      pagination: {
-       page: pagination.page  || 1,
+       page: filter.page || pagination.value?.page || 1,
        limit: 10
      },
      filter: {
@@ -439,8 +439,7 @@ const getHouseholdList = async (filter = {}) => {
 }
 
 const handlePageChange = async (page) => {
-  pagination.page = page;
-  await getHouseholdList();
+  await getHouseholdList({ page });
 }
 
 const openModal = (row = null) => {
@@ -453,7 +452,7 @@ const openModal = (row = null) => {
     formData.houseUsage = row.houseUsage;
     formData.isActive = row.isActive;
     formData.status = row.status;
-    formData.id = row.id;
+    formData.id = row._id || row.id;
   } else {
     // Create mode - clear form
     isCreateMode.value = true;
@@ -469,7 +468,7 @@ const onDelete = async (row) => {
 }
 
 const deleteHousehold = async () => {
-  await houseHoldStore.deleteHousehold({id: dataConfirmDelete.value.id});
+  await houseHoldStore.deleteHousehold({id: dataConfirmDelete.value._id || dataConfirmDelete.value.id});
   modalConfrimDelete.value  = false;
   dataConfirmDelete.value = null;
   titleAlertSuccess.value = "ลบข้อมูลสำเร็จ";
@@ -494,4 +493,5 @@ const applyFilters = async () => {
 // Individual filter handlers that call the combined function
 const filterByStatus = () => applyFilters();
 const handleSearch = () => applyFilters();
+
 </script>

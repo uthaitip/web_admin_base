@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
     const decoded = verifyToken(token)
 
     // Find current user to check permissions
-    const currentUser = await User.findById(decoded.userId)
+    const currentUser = await User.findById(decoded.userId);
 
     if (!currentUser || !currentUser.isActive) {
       throw createPredefinedError(API_RESPONSE_CODES.UNAUTHORIZED)

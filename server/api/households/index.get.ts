@@ -1,6 +1,6 @@
 import { HouseHold } from './../../../composables/data_models/user-management';
-import { connectMongoDB } from '~/lib/mongodb'
-import Household from '~/models/Household'
+import { connectMongoDB } from '~/server/utils/mongodb'
+import Household from '~/server/models/Household'
 import { createPredefinedError, createSuccessResponseWithMessages } from '~/server/utils/responseHandler'
 import { createHouseholdFilterConfig } from '~/server/utils/filter_config/houseHoldManagement'
 import { parseQueryAndBuildFilter } from '~/server/utils/queryParser'

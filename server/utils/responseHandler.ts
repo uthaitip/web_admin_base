@@ -660,3 +660,27 @@ export function createPaginatedResponse<T>(
 
   return response
 }
+
+/**
+ * Create success response with messages (alias for createPaginatedResponse)
+ */
+export function createSuccessResponseWithMessages<T>(options: {
+  data: T[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    pages: number
+  }
+  responseType?: keyof typeof API_RESPONSE
+  additionalData?: any
+}) {
+  return createPaginatedResponse(
+    options.data,
+    options.pagination,
+    {
+      responseType: options.responseType || 'SUCCESS',
+      additionalData: options.additionalData || {}
+    }
+  )
+}

@@ -1,7 +1,7 @@
 import { HouseHold } from './../../../composables/data_models/user-management';
-import { connectMongoDB } from '~/lib/mongodb'
-import Household from '~/models/Household'
-import { createPredefinedError, createSuccessResponseWithMessages } from '~/server/utils/responseHandler'
+import { connectMongoDB } from '~/server/utils/mongodb'
+import Household from '~/server/models/Household'
+import { createPredefinedError, createSuccessResponse } from '~/server/utils/responseHandler'
 import { createHouseholdFilterConfig } from '~/server/utils/filter_config/houseHoldManagement'
 import { parseQueryAndBuildFilter } from '~/server/utils/queryParser'
 
@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
         }
 
         await Household.findByIdAndDelete(id)
-        return createSuccessResponseWithMessages({})
+        return createSuccessResponse(null)
     } catch (error) {
 
     }

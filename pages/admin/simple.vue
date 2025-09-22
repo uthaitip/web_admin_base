@@ -1,263 +1,293 @@
 <template>
-  <div>
-    <div class="flex items-center justify-between mb-6">
-      <h1 class="text-3xl font-bold text-primary">รายงานการใช้ไฟฟ้า</h1>
-      <div class="flex gap-3">
-        <!-- PDF Export Options -->
-        <div class="form-control">
-          <label class="label cursor-pointer">
-            <input type="checkbox" v-model="showAllInPDF" class="checkbox checkbox-sm" />
-            <span class="label-text ml-2">รวมข้อมูลทั้งหมดใน PDF</span>
-          </label>
-        </div>
-        
-        <BaseButton 
-          @click="downloadPDF" 
-          color="primary" 
-          size="md"
-          :loading="isExporting"
-          class="flex items-center gap-2"
-        >
-          <div class="flex gap-2">
-            <BaseIcon name="document-arrow-down" size="sm" /> 
-            <span> ส่งออก PDF </span>
+  <div class="min-h-screen bg-gray-50 p-6">
+    <!-- Header Section with better styling -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+            <BaseIcon name="chart-bar" size="lg" class="text-white" />
           </div>
-        </BaseButton>
+          <div>
+            <h1 class="text-3xl font-bold text-gray-900">รายงานการใช้ไฟฟ้า</h1>
+            <p class="text-gray-600 mt-1">ระบบจัดการและรายงานการใช้พลังงาน</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-6">
+          <!-- Enhanced Export Options -->
+          <div class="bg-gradient-to-r from-slate-50 to-blue-50 rounded-xl p-4 border border-blue-100 shadow-sm">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <BaseIcon name="cog-6-tooth" size="sm" class="text-white" />
+              </div>
+              <label class="flex items-center gap-3 cursor-pointer group">
+                <input type="checkbox" v-model="showAllInPDF" class="checkbox checkbox-sm checkbox-primary" />
+                <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700 transition-colors">
+                  รวมข้อมูลทั้งหมดใน PDF
+                </span>
+              </label>
+            </div>
+          </div>
+          
+          <!-- Enhanced Export Button -->
+          <BaseButton 
+            @click="downloadPDF" 
+            color="primary" 
+            size="lg"
+            :loading="isExporting"
+            :disabled="isExporting"
+            class="relative overflow-hidden bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 hover:from-blue-700 hover:via-purple-700 hover:to-indigo-800 text-white font-semibold px-8 py-4 rounded-xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:transform-none group"
+          >
+            <!-- Button background effect -->
+            <div class="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+            
+            <div class="relative flex items-center gap-3">
+              <div class="w-5 h-5 flex items-center justify-center">
+                <BaseIcon 
+                  :name="isExporting ? 'arrow-path' : 'document-arrow-down'" 
+                  size="sm" 
+                  :class="isExporting ? 'animate-spin' : 'group-hover:animate-bounce'" 
+                /> 
+              </div>
+              <span class="font-bold tracking-wide">
+                {{ isExporting ? 'กำลังสร้าง PDF...' : 'ส่งออก PDF' }}
+              </span>
+            </div>
+          </BaseButton>
+        </div>
       </div>
     </div>
 
-    <!-- Report Content -->
-    <div id="report-content" class="bg-white p-8 rounded-lg shadow-lg">
-      <!-- Header Info -->
-      <div class="text-center mb-8">
-        <h1 class="text-2xl font-bold text-gray-800 mb-2">รายงานการใช้ไฟฟ้า</h1>
-        <p class="text-gray-600">ประจำเดือน {{ currentMonth }} {{ currentYear }}</p>
-        <p class="text-sm text-gray-500">สร้างเมื่อ: {{ formatDate(new Date()) }}</p>
-      </div>
-
-      <!-- Summary Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div class="bg-blue-50 p-6 rounded-lg border border-blue-200">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-medium text-blue-600">การใช้ไฟรวม</p>
-              <p class="text-2xl font-bold text-blue-900">{{ totalUsage }} kWh</p>
-            </div>
-            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-              <BaseIcon name="bolt" size="lg" class="text-blue-600" />
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-green-50 p-6 rounded-lg border border-green-200">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-medium text-green-600">ค่าไฟรวม</p>
-              <p class="text-2xl font-bold text-green-900">฿{{ totalCost.toLocaleString() }}</p>
-            </div>
-            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-              <BaseIcon name="banknotes" size="lg" class="text-green-600" />
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-orange-50 p-6 rounded-lg border border-orange-200">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-medium text-orange-600">การใช้ไฟเฉลี่ย/วัน</p>
-              <p class="text-2xl font-bold text-orange-900">{{ averageDaily }} kWh</p>
-            </div>
-            <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-              <BaseIcon name="calendar-days" size="lg" class="text-orange-600" />
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-purple-50 p-6 rounded-lg border border-purple-200">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-medium text-purple-600">จำนวนครัวเรือน</p>
-              <p class="text-2xl font-bold text-purple-900">{{ householdCount }}</p>
-            </div>
-            <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-              <BaseIcon name="home" size="lg" class="text-purple-600" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Monthly Usage Chart (Table format for PDF) -->
-      <div class="mb-8">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">การใช้ไฟรายวัน</h2>
-        <div class="overflow-x-auto pdf-table-container">
-          <table class="w-full border-collapse border border-gray-300 pdf-table">
-            <thead>
-              <tr class="bg-gray-50">
-                <th class="border border-gray-300 px-4 py-2 text-left">วันที่</th>
-                <th class="border border-gray-300 px-4 py-2 text-right">การใช้ไฟ (kWh)</th>
-                <th class="border border-gray-300 px-4 py-2 text-right">ค่าไฟ (บาท)</th>
-                <th class="border border-gray-300 px-4 py-2 text-center">สถานะ</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="day in (showAllInPDF ? dailyUsage : paginatedDailyUsage)" :key="day.date" class="hover:bg-gray-50">
-                <td class="border border-gray-300 px-4 py-2">{{ formatDate(day.date) }}</td>
-                <td class="border border-gray-300 px-4 py-2 text-right">{{ day.usage }}</td>
-                <td class="border border-gray-300 px-4 py-2 text-right">{{ day.cost.toLocaleString() }}</td>
-                <td class="border border-gray-300 px-4 py-2 text-center">
-                  <span :class="getUsageStatusClass(day.usage)">
-                    {{ getUsageStatus(day.usage) }}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Household Details -->
-      <div class="mb-8">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">รายละเอียดการใช้ไฟตามครัวเรือน</h2>
-        <div class="overflow-x-auto pdf-table-container">
-          <table class="w-full border-collapse border border-gray-300 pdf-table">
-            <thead>
-              <tr class="bg-gray-50">
-                <th class="border border-gray-300 px-4 py-2 text-left">รหัสครัวเรือน</th>
-                <th class="border border-gray-300 px-4 py-2 text-left">ชื่อ-นามสกุล</th>
-                <th class="border border-gray-300 px-4 py-2 text-right">การใช้ไฟ (kWh)</th>
-                <th class="border border-gray-300 px-4 py-2 text-right">ค่าไฟ (บาท)</th>
-                <th class="border border-gray-300 px-4 py-2 text-center">ประเภท</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="household in (showAllInPDF ? householdData : paginatedHouseholds)" :key="household.id" class="hover:bg-gray-50">
-                <td class="border border-gray-300 px-4 py-2">{{ household.id }}</td>
-                <td class="border border-gray-300 px-4 py-2">{{ household.name }}</td>
-                <td class="border border-gray-300 px-4 py-2 text-right">{{ household.usage }}</td>
-                <td class="border border-gray-300 px-4 py-2 text-right">{{ household.cost.toLocaleString() }}</td>
-                <td class="border border-gray-300 px-4 py-2 text-center">
-                  <span :class="getHouseholdTypeClass(household.type)">
-                    {{ household.type }}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        
-        <!-- Pagination Controls (only show when not including all data in display) -->
-        <div v-if="!showAllInPDF && totalPages > 1" class="flex justify-center items-center gap-4 mt-6">
-          <button 
-            @click="currentPage = currentPage - 1" 
-            :disabled="currentPage === 1"
-            class="btn btn-sm btn-outline"
-          >
-            <BaseIcon name="chevron-left" size="sm" />
-            ก่อนหน้า
-          </button>
-          
-          <div class="flex items-center gap-2">
-            <span class="text-sm">หน้า</span>
-            <select v-model="currentPage" class="select select-sm select-bordered">
-              <option v-for="page in totalPages" :key="page" :value="page">
-                {{ page }}
-              </option>
-            </select>
-            <span class="text-sm">จาก {{ totalPages }}</span>
+    <!-- Report Content with better styling -->
+    <div id="report-content" class="bg-white rounded-lg shadow-lg overflow-hidden">
+      <!-- Official Government Document Header -->
+      <div class="bg-white border-b-2 border-gray-800 p-8">
+        <div class="text-center space-y-4">
+          <!-- Government Header -->
+          <div class="border-b border-gray-300 pb-2">
+            <h1 class="text-2xl font-bold text-gray-900 mb-2">กรมพัฒนาพลังงานทดแทนและอนุรักษ์พลังงาน</h1>
+            <h2 class="text-lg font-semibold text-gray-700">กระทรวงพลังงาน</h2>
           </div>
           
-          <button 
-            @click="currentPage = currentPage + 1" 
-            :disabled="currentPage === totalPages"
-            class="btn btn-sm btn-outline"
-          >
-            ถัดไป
-            <BaseIcon name="chevron-right" size="sm" />
-          </button>
-        </div>
-
-        <!-- Data summary -->
-        <div class="text-center mt-4 text-sm text-gray-600">
-          <span v-if="showAllInPDF">
-            แสดงข้อมูลทั้งหมด: {{ householdData.length }} ครัวเรือน, {{ dailyUsage.length }} วัน
-          </span>
-          <span v-else>
-            แสดง {{ ((currentPage - 1) * itemsPerPage) + 1 }}-{{ Math.min(currentPage * itemsPerPage, householdData.length) }} 
-            จาก {{ householdData.length }} ครัวเรือน
-          </span>
-        </div>
-      </div>
-
-      <!-- Usage Analysis -->
-      <div class="mb-8">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">การวิเคราะห์การใช้ไฟ</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="bg-gray-50 p-6 rounded-lg">
-            <h3 class="font-semibold text-gray-800 mb-3">สถิติการใช้ไฟ</h3>
-            <div class="space-y-2">
-              <div class="flex justify-between">
-                <span>การใช้ไฟสูงสุด:</span>
-                <span class="font-semibold">{{ maxUsage }} kWh</span>
-              </div>
-              <div class="flex justify-between">
-                <span>การใช้ไฟต่ำสุด:</span>
-                <span class="font-semibold">{{ minUsage }} kWh</span>
-              </div>
-              <div class="flex justify-between">
-                <span>ส่วนเบียงเบนมาตรฐาน:</span>
-                <span class="font-semibold">{{ standardDeviation }} kWh</span>
-              </div>
-            </div>
+          <!-- Document Title -->
+          <div class="py-6">
+            <h3 class="text-xl font-bold text-gray-900 mb-2">รายงานการใช้ไฟฟ้ารายวัน</h3>
+            <p class="text-lg text-gray-700">ประจำเดือน {{ currentMonth }} พ.ศ. {{ currentYear }}</p>
           </div>
-
-          <div class="bg-gray-50 p-6 rounded-lg">
-            <h3 class="font-semibold text-gray-800 mb-3">เปรียบเทียบเดือนก่อน</h3>
-            <div class="space-y-2">
-              <div class="flex justify-between">
-                <span>การใช้ไฟเดือนนี้:</span>
-                <span class="font-semibold">{{ totalUsage }} kWh</span>
-              </div>
-              <div class="flex justify-between">
-                <span>การใช้ไฟเดือนก่อน:</span>
-                <span class="font-semibold">{{ previousMonthUsage }} kWh</span>
-              </div>
-              <div class="flex justify-between">
-                <span>ผลต่าง:</span>
-                <span :class="usageChangeClass">{{ usageChange }}</span>
-              </div>
-            </div>
+          
+          <!-- Document Info -->
+          <div class="text-right text-sm text-gray-600">
+            <p>วันที่จัดทำ: {{ formatDate(new Date()) }}</p>
+            <p>เลขที่เอกสาร: DOC-{{ new Date().getFullYear() }}-{{ String(new Date().getMonth() + 1).padStart(2, '0') }}-{{ String(new Date().getDate()).padStart(2, '0') }}</p>
           </div>
         </div>
       </div>
+      
+      <!-- Report Body -->
+      <div class="p-8">
 
-      <!-- Footer -->
-      <div class="text-center text-sm text-gray-500 mt-8 pt-4 border-t border-gray-200">
-        <p>รายงานนี้สร้างขึ้นโดยระบบจัดการการใช้ไฟฟ้า</p>
-        <p>ข้อมูล ณ วันที่ {{ formatDate(new Date()) }}</p>
+
+        <!-- Official Government Table -->
+        <div class="mb-8">
+          <!-- Formal section header -->
+          <div class="mb-6">
+            <h2 class="text-lg font-bold text-gray-900 border-b-2 border-gray-300 pb-2 mb-4">
+              ตารางแสดงข้อมูลการใช้ไฟฟ้ารายวัน
+            </h2>
+            <p class="text-sm text-gray-700 mb-4">
+              ข้อมูลการใช้ไฟฟ้าและค่าใช้จ่ายประจำวัน เรียงตามวันที่ (รวม {{ dailyUsage.length }} วัน)
+            </p>
+          </div>
+
+          <!-- Data validation alert -->
+          <div v-if="dailyUsage.length === 0" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <div class="flex items-center">
+              <BaseIcon name="exclamation-triangle" size="sm" class="text-red-600 mr-2" />
+              <span class="text-red-800 font-medium">ไม่พบข้อมูลการใช้ไฟฟ้า</span>
+            </div>
+          </div>
+
+          <div v-else-if="dailyUsage.length < 30" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+            <div class="flex items-center">
+              <BaseIcon name="exclamation-triangle" size="sm" class="text-yellow-600 mr-2" />
+              <span class="text-yellow-800 font-medium">
+                ข้อมูลไม่ครบ: มีข้อมูลเพียง {{ dailyUsage.length }} วัน จากทั้งหมด 30 วัน
+              </span>
+            </div>
+          </div>
+
+          <!-- Official table -->
+          <div class="border-2 border-gray-800">
+            <table class="w-full pdf-table border-collapse">
+              <thead>
+                <tr class="bg-gray-100">
+                  <th class="px-4 py-3 text-center text-sm font-bold text-gray-900 border border-gray-800">
+                    ลำดับ
+                  </th>
+                  <th class="px-4 py-3 text-center text-sm font-bold text-gray-900 border border-gray-800">
+                    วันที่
+                  </th>
+                  <th class="px-4 py-3 text-center text-sm font-bold text-gray-900 border border-gray-800">
+                    การใช้ไฟฟ้า<br/>(กิโลวัตต์-ชั่วโมง)
+                  </th>
+                  <th class="px-4 py-3 text-center text-sm font-bold text-gray-900 border border-gray-800">
+                    ค่าไฟฟ้า<br/>(บาท)
+                  </th>
+                  <th class="px-4 py-3 text-center text-sm font-bold text-gray-900 border border-gray-800">
+                    หมายเหตุ
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(day, index) in (showAllInPDF ? dailyUsage : paginatedDailyUsage)" 
+                    :key="day.date.toISOString()"
+                    class="hover:bg-gray-50">
+                  <td class="px-4 py-3 text-center text-sm text-gray-900 border border-gray-800">
+                    {{ showAllInPDF ? index + 1 : ((currentPage - 1) * itemsPerPage) + index + 1 }}
+                  </td>
+                  <td class="px-4 py-3 text-center text-sm text-gray-900 border border-gray-800">
+                    {{ formatDateThai(day.date) }}
+                  </td>
+                  <td class="px-4 py-3 text-center text-sm text-gray-900 border border-gray-800 font-mono">
+                    {{ day.usage.toLocaleString() }}
+                  </td>
+                  <td class="px-4 py-3 text-center text-sm text-gray-900 border border-gray-800 font-mono">
+                    {{ day.cost.toLocaleString() }}
+                  </td>
+                  <td class="px-4 py-3 text-center text-sm text-gray-900 border border-gray-800">
+                    {{ getUsageStatusThai(day.usage) }}
+                  </td>
+                </tr>
+              </tbody>
+              <!-- Summary row -->
+              <tfoot>
+                <tr class="bg-gray-100 font-bold">
+                  <td colspan="2" class="px-4 py-3 text-center text-sm text-gray-900 border border-gray-800">
+                    {{ showAllInPDF ? 'รวมทั้งสิ้น' : `รวมหน้านี้ (${currentPageData.length} รายการ)` }}
+                  </td>
+                  <td class="px-4 py-3 text-center text-sm text-gray-900 border border-gray-800 font-mono">
+                    {{ showAllInPDF ? totalUsage : currentPageUsage }} กิโลวัตต์-ชั่วโมง
+                  </td>
+                  <td class="px-4 py-3 text-center text-sm text-gray-900 border border-gray-800 font-mono">
+                    {{ showAllInPDF ? totalCost.toLocaleString() : currentPageCost.toLocaleString() }} บาท
+                  </td>
+                  <td class="px-4 py-3 text-center text-sm text-gray-900 border border-gray-800">
+                    {{ showAllInPDF ? '-' : `หน้า ${currentPage}/${totalPages}` }}
+                  </td>
+                </tr>
+                <tr v-if="!showAllInPDF && totalPages > 1" class="bg-gray-50 font-semibold">
+                  <td colspan="2" class="px-4 py-3 text-center text-sm text-gray-700 border border-gray-800">
+                    รวมทั้งสิ้น ({{ dailyUsage.length }} รายการ)
+                  </td>
+                  <td class="px-4 py-3 text-center text-sm text-gray-700 border border-gray-800 font-mono">
+                    {{ totalUsage }} กิโลวัตต์-ชั่วโมง
+                  </td>
+                  <td class="px-4 py-3 text-center text-sm text-gray-700 border border-gray-800 font-mono">
+                    {{ totalCost.toLocaleString() }} บาท
+                  </td>
+                  <td class="px-4 py-3 text-center text-sm text-gray-700 border border-gray-800">
+                    -
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          
+          <!-- Pagination Controls (only show when not exporting all data) -->
+          <div v-if="!showAllInPDF && totalPages > 1" class="mt-6 flex justify-center">
+            <div class="bg-white border-2 border-gray-300 rounded-lg p-4">
+              <div class="flex items-center justify-between gap-4">
+                <div class="flex items-center gap-2">
+                  <button 
+                    @click="currentPage = currentPage - 1" 
+                    :disabled="currentPage === 1"
+                    class="px-3 py-2 border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  >
+                    ← ก่อนหน้า
+                  </button>
+                  
+                  <div class="flex items-center gap-1">
+                    <span class="text-sm font-medium">หน้า</span>
+                    <select 
+                      v-model="currentPage" 
+                      class="border border-gray-300 rounded px-2 py-1 text-sm"
+                    >
+                      <option v-for="page in totalPages" :key="page" :value="page">
+                        {{ page }}
+                      </option>
+                    </select>
+                    <span class="text-sm font-medium">จาก {{ totalPages }}</span>
+                  </div>
+                  
+                  <button 
+                    @click="currentPage = currentPage + 1" 
+                    :disabled="currentPage === totalPages"
+                    class="px-3 py-2 border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  >
+                    ถัดไป →
+                  </button>
+                </div>
+                
+                <div class="text-sm text-gray-600">
+                  แสดง {{ ((currentPage - 1) * itemsPerPage) + 1 }}-{{ Math.min(currentPage * itemsPerPage, dailyUsage.length) }} 
+                  จาก {{ dailyUsage.length }} รายการ
+                </div>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </div> <!-- End report body p-8 -->
+
+
+      <!-- Official Government Footer -->
+      <div class="mt-12 border-t-2 border-gray-800 pt-8">
+        <!-- Summary Section -->
+        <div class="mb-8">
+          <h3 class="text-lg font-bold text-gray-900 mb-4">สรุปผลการรายงาน</h3>
+          <div class="grid grid-cols-2 gap-6">
+            <div>
+              <p class="text-sm text-gray-700 mb-2"><span class="font-semibold">การใช้ไฟฟ้ารวม:</span> {{ totalUsage }} กิโลวัตต์-ชั่วโมง</p>
+              <p class="text-sm text-gray-700 mb-2"><span class="font-semibold">ค่าไฟฟ้ารวม:</span> {{ totalCost.toLocaleString() }} บาท</p>
+              <p class="text-sm text-gray-700"><span class="font-semibold">จำนวนวันที่บันทึก:</span> {{ dailyUsage.length }} วัน</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-700 mb-2"><span class="font-semibold">การใช้ไฟฟ้าเฉลี่ยต่อวัน:</span> {{ averageDaily }} กิโลวัตต์-ชั่วโมง</p>
+              <p class="text-sm text-gray-700 mb-2"><span class="font-semibold">ค่าไฟฟ้าเฉลี่ยต่อวัน:</span> {{ (totalCost / dailyUsage.length).toLocaleString() }} บาท</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Signature Section -->
+        <div class="grid grid-cols-2 gap-12 mb-8">
+          <div class="text-center">
+            <div class="border-b border-gray-400 mb-2 pb-12"></div>
+            <p class="text-sm font-semibold text-gray-900">ผู้จัดทำรายงาน</p>
+            <p class="text-xs text-gray-600">ตำแหนง่ เจ้าหน้าที่วิเคราะห์ข้อมูล</p>
+          </div>
+          <div class="text-center">
+            <div class="border-b border-gray-400 mb-2 pb-12"></div>
+            <p class="text-sm font-semibold text-gray-900">ผู้อนุมัติรายงาน</p>
+            <p class="text-xs text-gray-600">ตำแหนง่ ผู้อำนวยการกอง</p>
+          </div>
+        </div>
+
+        <!-- Document Footer -->
+        <div class="text-center text-xs text-gray-600 border-t border-gray-300 pt-4">
+          <p class="mb-1">รายงานฉบับนี้จัดทำขึ้นโดยระบบสารสนเทศการจัดการพลังงาน</p>
+          <p class="mb-1">กรมพัฒนาพลังงานทดแทนและอนุรักษ์พลังงาน กระทรวงพลังงาน</p>
+          <p>พิมพ์เมื่อ: {{ formatDateThai(new Date()) }} เวลา {{ new Date().toLocaleTimeString('th-TH') }} น.</p>
+        </div>
       </div>
-    </div>
+    </div> <!-- End report-content -->
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed } from 'vue'
 import jsPDF from 'jspdf'
 import 'jspdf-autotable'
 import * as htmlToImage from 'html-to-image'
 
-// Function to configure Thai-friendly font
-const configureThaiFont = (pdf: jsPDF) => {
-  // Use a combination approach for better Thai support
-  try {
-    // Try courier first (better Unicode support)
-    pdf.setFont('courier', 'normal')
-    return 'courier'
-  } catch (error) {
-    console.warn('Courier font failed, using helvetica:', error)
-    pdf.setFont('helvetica', 'normal')
-    return 'helvetica'
-  }
-}
 
 // Type declaration for jsPDF with autoTable
 declare module 'jspdf' {
@@ -271,14 +301,17 @@ declare module 'jspdf' {
 
 // Reactive data
 const isExporting = ref(false)
-const currentMonth = ref('กันยายน')
+const exportProgress = ref('')
+const currentMonth = ref('ตุลาคม')
 const currentYear = ref('2567')
 
-// Generate mock data for electricity usage (more data for testing)
+// Generate mock data for electricity usage (flexible data)
 const generateDailyUsage = () => {
   const data = []
-  for (let i = 1; i <= 60; i++) { // 60 days of data
-    const date = new Date('2024-09-01')
+  // สร้างข้อมูลได้หลายเดือน (เช่น 3 เดือน = 90 วัน)
+  const totalDays = 65 // สามารถปรับได้ตามต้องการ
+  for (let i = 1; i <= totalDays; i++) {
+    const date = new Date('2024-08-01') // เริ่มจากสิงหาคม
     date.setDate(i)
     const usage = Math.round((Math.random() * 15 + 20) * 10) / 10 // 20-35 kWh
     const cost = Math.round(usage * 5) // ราคา 5 บาทต่อหน่วย
@@ -331,7 +364,7 @@ const householdData = ref(generateHouseholdData())
 
 // Pagination controls
 const currentPage = ref(1)
-const itemsPerPage = ref(20)
+const itemsPerPage = ref(25) // จำนวนรายการต่อหน้าที่เหมาะสำหรับการพิมพ์
 const showAllInPDF = ref(true)
 
 // Computed values
@@ -347,10 +380,9 @@ const averageDaily = computed(() =>
   (parseFloat(totalUsage.value) / dailyUsage.value.length).toFixed(1)
 )
 
-const householdCount = computed(() => householdData.value.length)
 
 // Pagination computed values
-const totalPages = computed(() => Math.ceil(householdData.value.length / itemsPerPage.value))
+const totalPages = computed(() => Math.ceil(dailyUsage.value.length / itemsPerPage.value))
 
 const paginatedHouseholds = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value
@@ -364,41 +396,20 @@ const paginatedDailyUsage = computed(() => {
   return dailyUsage.value.slice(start, end)
 })
 
-// For PDF export - use all data or paginated
-const exportHouseholds = computed(() => 
-  showAllInPDF.value ? householdData.value : paginatedHouseholds.value
-)
-
-const exportDailyUsage = computed(() => 
+const currentPageData = computed(() => 
   showAllInPDF.value ? dailyUsage.value : paginatedDailyUsage.value
 )
 
-const maxUsage = computed(() => 
-  Math.max(...dailyUsage.value.map(d => d.usage)).toFixed(1)
+const currentPageUsage = computed(() => 
+  currentPageData.value.reduce((sum, day) => sum + day.usage, 0).toFixed(1)
 )
 
-const minUsage = computed(() => 
-  Math.min(...dailyUsage.value.map(d => d.usage)).toFixed(1)
+const currentPageCost = computed(() => 
+  currentPageData.value.reduce((sum, day) => sum + day.cost, 0)
 )
 
-const standardDeviation = computed(() => {
-  const avg = parseFloat(averageDaily.value)
-  const variance = dailyUsage.value.reduce((sum, day) => 
-    sum + Math.pow(day.usage - avg, 2), 0) / dailyUsage.value.length
-  return Math.sqrt(variance).toFixed(1)
-})
 
-const previousMonthUsage = ref(385.2)
-const usageChange = computed(() => {
-  const change = parseFloat(totalUsage.value) - previousMonthUsage.value
-  const percentage = ((change / previousMonthUsage.value) * 100).toFixed(1)
-  return `${change > 0 ? '+' : ''}${change.toFixed(1)} kWh (${percentage}%)`
-})
 
-const usageChangeClass = computed(() => {
-  const change = parseFloat(totalUsage.value) - previousMonthUsage.value
-  return change > 0 ? 'text-red-600 font-semibold' : 'text-green-600 font-semibold'
-})
 
 // Helper functions
 const formatDate = (date: Date) => {
@@ -409,524 +420,147 @@ const formatDate = (date: Date) => {
   }).format(date)
 }
 
+const formatDateThai = (date: Date) => {
+  const thaiMonths = [
+    'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+    'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+  ]
+  const day = date.getDate()
+  const month = thaiMonths[date.getMonth()]
+  const year = date.getFullYear() + 543
+  return `${day} ${month} ${year}`
+}
+
+const getUsageStatusThai = (usage: number) => {
+  if (usage < 25) return 'ปกติ'
+  if (usage < 30) return 'เฝ้าระวัง'
+  return 'สูงกว่าปกติ'
+}
+
 const getUsageStatus = (usage: number) => {
   if (usage < 25) return 'ต่ำ'
   if (usage < 30) return 'ปกติ'
   return 'สูง'
 }
 
-const getUsageStatusClass = (usage: number) => {
-  if (usage < 25) return 'px-2 py-1 rounded text-xs bg-green-100 text-green-800'
-  if (usage < 30) return 'px-2 py-1 rounded text-xs bg-yellow-100 text-yellow-800'
-  return 'px-2 py-1 rounded text-xs bg-red-100 text-red-800'
-}
-
-const getHouseholdTypeClass = (type: string) => {
-  switch(type) {
-    case 'ผู้สูงอายุ':
-      return 'px-2 py-1 rounded text-xs bg-blue-100 text-blue-800'
-    case 'ผู้ด้อยโอกาส':
-      return 'px-2 py-1 rounded text-xs bg-purple-100 text-purple-800'
-    default:
-      return 'px-2 py-1 rounded text-xs bg-gray-100 text-gray-800'
-  }
-}
 
 const downloadPDF = async () => {
   isExporting.value = true;
   
   try {
-    console.log('Creating PDF with working hybrid approach...');
+    exportProgress.value = 'เริ่มต้นการสร้าง PDF...';
+    console.log('กำลังสร้าง PDF...');
 
     const element = document.getElementById("report-content");
     if (!element) {
-      alert('ไม่พบข้อมูลที่จะส่งออก');
-      return;
+      throw new Error('ไม่พบข้อมูลที่จะส่งออก');
     }
 
-    // Hide summary cards and analysis section
-    const summaryCards = element.querySelectorAll('.grid.grid-cols-1.md\\:grid-cols-4');
-    summaryCards.forEach(card => {
-      card.style.display = 'none';
-    });
+    exportProgress.value = 'กำลังเตรียมข้อมูล...';
 
-    const analysisSection = element.querySelector('.mb-8 h2');
-    if (analysisSection && analysisSection.textContent.includes('การวิเคราะห์')) {
-      analysisSection.closest('.mb-8').style.display = 'none';
-    }
-
-    // Add PDF export class for styling
+    // Prepare element for PDF export
     element.classList.add('pdf-export-mode');
+    
+    // Wait for layout to stabilize
+    await new Promise(resolve => setTimeout(resolve, 300));
 
-    // Wait for fonts to load
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Configure html-to-image options for Thai font support
+    // Configure options for better Thai font support
     const options = {
-      quality: 0.98,
+      quality: 1,
       pixelRatio: 2,
       backgroundColor: '#ffffff',
       useCORS: true,
       allowTaint: true,
       style: {
-        transform: 'scale(1)',
-        transformOrigin: 'top left',
-        fontFamily: "'Sarabun', 'Noto Sans Thai', 'Helvetica Neue', sans-serif"
+        fontFamily: "'Sarabun', 'Noto Sans Thai', sans-serif",
+        fontSize: '14px',
+        lineHeight: '1.4'
       }
     };
-
-    // Get data to export - combine all data into single array with 35 rows per page
-    const dailyDataToExport = showAllInPDF.value ? dailyUsage.value : paginatedDailyUsage.value;
-    const householdDataToExport = showAllInPDF.value ? householdData.value : paginatedHouseholds.value;
     
-    // Combine all data into a single array for pagination
-    const allData = [
-      ...dailyDataToExport.map(item => ({ ...item, type: 'daily' })),
-      ...householdDataToExport.map(item => ({ ...item, type: 'household' }))
-    ];
-    
-    const rowsPerPage = 35;
-    const totalPages = Math.ceil(allData.length / rowsPerPage);
-    console.log(`Total data rows: ${allData.length}, Total pages: ${totalPages}`);
+    exportProgress.value = 'กำลังแปลงเป็นรูปภาพ...';
 
+    // Create PDF
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
-    const margin = 8;
+    const margin = 10;
     
-    // Store original data
-    const originalDailyUsage = [...dailyUsage.value];
-    const originalHouseholdData = [...householdData.value];
-    const originalShowAll = showAllInPDF.value;
+    // Convert to canvas and add to PDF
+    const canvas = await htmlToImage.toCanvas(element, options);
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
     
-    try {
-      for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
-        console.log(`Generating page ${pageIndex + 1} of ${totalPages}...`);
+    const imgWidth = pageWidth - (margin * 2);
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    
+    // Check if content fits on one page
+    const maxPageHeight = pageHeight - (margin * 2);
+    
+    if (imgHeight <= maxPageHeight) {
+      // Single page
+      pdf.addImage(imgData, 'JPEG', margin, margin, imgWidth, imgHeight);
+    } else {
+      // Multiple pages
+      const pages = Math.ceil(imgHeight / maxPageHeight);
+      for (let i = 0; i < pages; i++) {
+        if (i > 0) pdf.addPage();
         
-        if (pageIndex > 0) {
-          pdf.addPage();
+        const sourceY = i * maxPageHeight * (canvas.height / imgHeight);
+        const sourceHeight = Math.min(maxPageHeight * (canvas.height / imgHeight), canvas.height - sourceY);
+        
+        const pageCanvas = document.createElement('canvas');
+        const ctx = pageCanvas.getContext('2d');
+        pageCanvas.width = canvas.width;
+        pageCanvas.height = sourceHeight;
+        
+        if (ctx) {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, sourceHeight);
+          ctx.drawImage(canvas, 0, sourceY, canvas.width, sourceHeight, 0, 0, canvas.width, sourceHeight);
+          
+          const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.95);
+          const pageImgHeight = (sourceHeight * imgWidth) / canvas.width;
+          pdf.addImage(pageImgData, 'JPEG', margin, margin, imgWidth, pageImgHeight);
         }
-        
-        // Get 35 rows for this page
-        const startIndex = pageIndex * rowsPerPage;
-        const endIndex = Math.min(startIndex + rowsPerPage, allData.length);
-        const currentPageData = allData.slice(startIndex, endIndex);
-        
-        // Separate daily and household data for this page
-        const dailyForThisPage = currentPageData.filter(item => item.type === 'daily');
-        const householdForThisPage = currentPageData.filter(item => item.type === 'household');
-        
-        // Remove the type property
-        const cleanDailyData = dailyForThisPage.map(({type, ...rest}) => rest);
-        const cleanHouseholdData = householdForThisPage.map(({type, ...rest}) => rest);
-        
-        console.log(`Page ${pageIndex + 1}: ${cleanDailyData.length} daily, ${cleanHouseholdData.length} household`);
-        
-        // Update Vue data for this page
-        dailyUsage.value = cleanDailyData;
-        householdData.value = cleanHouseholdData;
-        showAllInPDF.value = true;
-        
-        // Force Vue to update the DOM
-        await new Promise(resolve => {
-          nextTick(() => {
-            setTimeout(resolve, 400);
-          });
-        });
-        
-        // Capture the updated content
-        const canvas = await htmlToImage.toCanvas(element, options);
-        
-        const imgWidth = pageWidth - (margin * 2);
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        pdf.addImage(imgData, 'JPEG', margin, 15, imgWidth, imgHeight);
       }
-      
-    } finally {
-      // Always restore original data
-      dailyUsage.value = originalDailyUsage;
-      householdData.value = originalHouseholdData;
-      showAllInPDF.value = originalShowAll;
     }
 
-    // Save PDF
-    const filename = `electricity-report-${new Date().toISOString().slice(0, 10)}.pdf`;
+    
+    exportProgress.value = 'กำลังบันทึก PDF...';
+    
+    // Save PDF with timestamp
+    const now = new Date();
+    const dateStr = now.toISOString().slice(0, 10);
+    const timeStr = now.toTimeString().slice(0, 5).replace(':', '');
+    const filename = `รายงานการใช้ไฟฟ้า-${dateStr}-${timeStr}.pdf`;
+    
     pdf.save(filename);
     
-    const totalPagesGenerated = pdf.internal.getNumberOfPages();
-    alert(`PDF ดาวน์โหลดเรียบร้อยแล้ว! (${totalPagesGenerated} หน้า, ${rowsPerPage} แถว/หน้า)`);
+    const totalPages = (pdf as any).internal.getNumberOfPages();
+    console.log(`PDF สร้างเสร็จแล้ว: ${totalPages} หน้า`);
+    
+    // Show success message
+    alert(`✅ PDF ดาวน์โหลดเรียบร้อยแล้ว!\n\nจำนวนหน้า: ${totalPages}\nข้อมูล: ${showAllInPDF.value ? 'ทั้งหมด' : 'เฉพาะหน้าปัจจุบัน'}`);
 
   } catch (error) {
     console.error('Error generating PDF:', error);
-    alert(`เกิดข้อผิดพลาด: ${error.message}`);
+    alert(`❌ เกิดข้อผิดพลาดในการสร้าง PDF\n\nรายละเอียด: ${error instanceof Error ? error.message : 'ข้อผิดพลาดไม่ทราบสาเหตุ'}`);
   } finally {
     // Restore UI
     const element = document.getElementById("report-content");
     if (element) {
       element.classList.remove('pdf-export-mode');
-      
-      // Restore hidden elements
-      const summaryCards = element.querySelectorAll('.grid.grid-cols-1.md\\:grid-cols-4');
-      summaryCards.forEach(card => {
-        card.style.display = '';
-      });
-      
-      const analysisSection = element.querySelector('.mb-8 h2');
-      if (analysisSection && analysisSection.textContent.includes('การวิเคราะห์')) {
-        analysisSection.closest('.mb-8').style.display = '';
-      }
     }
     
+    exportProgress.value = '';
     isExporting.value = false;
   }
 }
 
-// Function to create PDF sections with continuous layout
-const createPDFSections = async (addSectionToPdf, pdf) => {
-  // Create single continuous document
-  const dailyData = showAllInPDF.value ? dailyUsage.value : paginatedDailyUsage.value;
-  const householdData_ = showAllInPDF.value ? householdData.value : paginatedHouseholds.value;
-  
-  const fullHtml = `
-    <div class="bg-white" style="
-      font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
-      width: 210mm;
-      padding: 5mm;
-      box-sizing: border-box;
-      font-size: 10px;
-      line-height: 1.2;
-    ">
-      <!-- Header Section -->
-      <div class="text-center" style="margin-bottom: 15px;">
-        <h1 style="font-size: 22px; font-weight: bold; color: #1f2937; margin-bottom: 5px;">รายงานการใช้ไฟฟ้า</h1>
-        <p style="color: #4b5563; font-size: 14px; margin-bottom: 3px;">ประจำเดือน ${currentMonth.value} ${currentYear.value}</p>
-        <p style="color: #6b7280; font-size: 10px;">สร้างเมื่อ: ${formatDate(new Date())}</p>
-      </div>
-      
-      <!-- Daily Usage Section -->
-      <div style="margin-bottom: 20px;">
-        <h2 style="font-size: 14px; font-weight: bold; color: #1f2937; margin-bottom: 8px; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px;">การใช้ไฟรายวัน</h2>
-        <table style="
-          width: 100%;
-          border-collapse: collapse;
-          font-size: 9px;
-          margin-bottom: 10px;
-        ">
-          <thead>
-            <tr style="background-color: #f9fafb;">
-              <th style="border: 1px solid #d1d5db; padding: 4px 6px; text-align: left; font-weight: 600;">วันที่</th>
-              <th style="border: 1px solid #d1d5db; padding: 4px 6px; text-align: right; font-weight: 600;">การใช้ไฟ (kWh)</th>
-              <th style="border: 1px solid #d1d5db; padding: 4px 6px; text-align: right; font-weight: 600;">ค่าไฟ (บาท)</th>
-              <th style="border: 1px solid #d1d5db; padding: 4px 6px; text-align: center; font-weight: 600;">สถานะ</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${dailyData.map(day => `
-              <tr>
-                <td style="border: 1px solid #d1d5db; padding: 4px 6px; font-size: 8px;">${formatDate(day.date)}</td>
-                <td style="border: 1px solid #d1d5db; padding: 4px 6px; text-align: right; font-size: 8px;">${day.usage}</td>
-                <td style="border: 1px solid #d1d5db; padding: 4px 6px; text-align: right; font-size: 8px;">${day.cost.toLocaleString()}</td>
-                <td style="border: 1px solid #d1d5db; padding: 4px 6px; text-align: center; font-size: 8px;">
-                  <span style="padding: 1px 4px; border-radius: 2px; font-size: 7px; ${getStatusStyle(day.usage)}">${getUsageStatus(day.usage)}</span>
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
 
-      <!-- Household Section -->
-      <div style="margin-bottom: 10px;">
-        <h2 style="font-size: 14px; font-weight: bold; color: #1f2937; margin-bottom: 8px; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px;">รายละเอียดการใช้ไฟตามครัวเรือน</h2>
-        <table style="
-          width: 100%;
-          border-collapse: collapse;
-          font-size: 9px;
-        ">
-          <thead>
-            <tr style="background-color: #f9fafb;">
-              <th style="border: 1px solid #d1d5db; padding: 4px 6px; text-align: left; font-weight: 600; width: 12%;">รหัสครัวเรือน</th>
-              <th style="border: 1px solid #d1d5db; padding: 4px 6px; text-align: left; font-weight: 600; width: 40%;">ชื่อ-นามสกุล</th>
-              <th style="border: 1px solid #d1d5db; padding: 4px 6px; text-align: right; font-weight: 600; width: 16%;">การใช้ไฟ (kWh)</th>
-              <th style="border: 1px solid #d1d5db; padding: 4px 6px; text-align: right; font-weight: 600; width: 18%;">ค่าไฟ (บาท)</th>
-              <th style="border: 1px solid #d1d5db; padding: 4px 6px; text-align: center; font-weight: 600; width: 14%;">ประเภท</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${householdData_.map(household => `
-              <tr>
-                <td style="border: 1px solid #d1d5db; padding: 4px 6px; font-size: 8px;">${household.id}</td>
-                <td style="border: 1px solid #d1d5db; padding: 4px 6px; font-size: 8px;">${household.name}</td>
-                <td style="border: 1px solid #d1d5db; padding: 4px 6px; text-align: right; font-size: 8px;">${household.usage}</td>
-                <td style="border: 1px solid #d1d5db; padding: 4px 6px; text-align: right; font-size: 8px;">${household.cost.toLocaleString()}</td>
-                <td style="border: 1px solid #d1d5db; padding: 4px 6px; text-align: center; font-size: 8px;">
-                  <span style="padding: 1px 4px; border-radius: 2px; font-size: 7px; ${getHouseholdStatusStyle(household.type)}">${household.type}</span>
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  `;
-  
-  // Create single document
-  const fullDiv = document.createElement('div');
-  fullDiv.innerHTML = fullHtml;
-  document.body.appendChild(fullDiv);
-  await addSectionToPdf(fullDiv, true);
-  document.body.removeChild(fullDiv);
-}
 
-// Helper functions for English status
-const getUsageStatusEn = (usage: number) => {
-  if (usage < 25) return 'Low'
-  if (usage < 30) return 'Normal'
-  return 'High'
-}
 
-const getHouseholdTypeEn = (type: string) => {
-  switch(type) {
-    case 'ผู้สูงอายุ':
-      return 'Elderly'
-    case 'ผู้ด้อยโอกาส':
-      return 'Low Income'
-    default:
-      return 'General'
-  }
-}
 
-// Helper functions for inline styles (since class-based styles won't work in HTML strings)
-const getStatusStyle = (usage) => {
-  if (usage < 25) return 'background-color: #dcfce7; color: #166534;'
-  if (usage < 30) return 'background-color: #fef3c7; color: #92400e;'
-  return 'background-color: #fee2e2; color: #991b1b;'
-}
-
-const getHouseholdStatusStyle = (type) => {
-  switch(type) {
-    case 'ผู้สูงอายุ':
-      return 'background-color: #dbeafe; color: #1e40af;'
-    case 'ผู้ด้อยโอกาส':
-      return 'background-color: #e9d5ff; color: #7c3aed;'
-    default:
-      return 'background-color: #f3f4f6; color: #374151;'
-  }
-}
-
-// PDF Export function - back to working approach without summary
-const exportToPDF = async () => {
-  isExporting.value = true
-  
-  try {
-    console.log('Creating PDF with hybrid approach...')
-    
-    // Show loading message for large datasets
-    if (showAllInPDF.value && (householdData.value.length > 50 || dailyUsage.value.length > 50)) {
-      alert('กำลังสร้าง PDF สำหรับข้อมูลจำนวนมาก กรุณารอสักครู่...')
-    }
-
-    // Get the report element and temporarily hide navigation
-    const reportElement = document.getElementById('report-content')
-    if (!reportElement) {
-      throw new Error('Report content not found')
-    }
-
-    // Hide summary cards temporarily
-    const summaryCards = reportElement.querySelectorAll('.grid.grid-cols-1.md\\:grid-cols-4')
-    summaryCards.forEach(card => {
-      card.style.display = 'none'
-    })
-
-    // Hide analysis section temporarily  
-    const analysisSection = reportElement.querySelector('.mb-8 h2')
-    if (analysisSection && analysisSection.textContent.includes('การวิเคราะห์')) {
-      analysisSection.closest('.mb-8').style.display = 'none'
-    }
-
-    // Temporarily hide pagination controls
-    const paginationElements = document.querySelectorAll('.btn, .select, [class*="pagination"], .form-control')
-    const originalDisplay = []
-    paginationElements.forEach((el, index) => {
-      if (!el.closest('#report-content')) {
-        originalDisplay[index] = el.style.display
-        el.style.display = 'none'
-      }
-    })
-
-    // Create PDF
-    const pdf = new jsPDF('p', 'mm', 'a4')
-    const pageWidth = pdf.internal.pageSize.getWidth()
-    const pageHeight = pdf.internal.pageSize.getHeight()
-    const margin = 8
-    
-    // Use data based on current settings
-    const dataToExport = showAllInPDF.value ? householdData.value : paginatedHouseholds.value
-    const dailyDataToExport = showAllInPDF.value ? dailyUsage.value : paginatedDailyUsage.value
-    
-    // Configure html-to-image options
-    const options = {
-      quality: 0.98,
-      pixelRatio: 2,
-      backgroundColor: '#ffffff',
-      useCORS: true,
-      allowTaint: true,
-      style: {
-        transform: 'scale(1)',
-        transformOrigin: 'top left',
-        fontFamily: "'Sarabun', 'Noto Sans Thai', sans-serif"
-      }
-    }
-
-    // Helper function to capture HTML as image and add to PDF
-    const addHtmlToPdf = async (element, addNewPage = true) => {
-      if (addNewPage && pdf.internal.getNumberOfPages() > 0) {
-        pdf.addPage()
-      }
-      
-      const canvas = await htmlToImage.toCanvas(element, options)
-      const imgWidth = pageWidth - (margin * 2)
-      const imgHeight = (canvas.height * imgWidth) / canvas.width
-      
-      // Check if we need to split across pages
-      const maxHeightPerPage = pageHeight - (margin * 2)
-      
-      if (imgHeight <= maxHeightPerPage) {
-        // Fits on one page
-        const imgData = canvas.toDataURL('image/jpeg', 0.95)
-        pdf.addImage(imgData, 'JPEG', margin, margin, imgWidth, imgHeight)
-      } else {
-        // Split across multiple pages
-        const pagesNeeded = Math.ceil(imgHeight / maxHeightPerPage)
-        
-        for (let page = 0; page < pagesNeeded; page++) {
-          if (page > 0) {
-            pdf.addPage()
-            // Add header on each page
-            // pdf.setFontSize(16);
-            // pdf.setFont('helvetica', 'bold');
-            // pdf.text('Electricity Usage Report', 105, 15, { align: 'center' });
-            
-            // pdf.setFontSize(12);
-            // pdf.setFont('helvetica', 'normal');
-            // pdf.text(`Month: ${currentMonth.value} Year: ${currentYear.value}`, 105, 25, { align: 'center' });
-            
-            // pdf.setFontSize(10);
-            // pdf.text(`Generated: ${new Date().toLocaleDateString('en-US')} - Page ${page + 1}`, 105, 35, { align: 'center' });
-          }
-          
-          // Adjust available height for subsequent pages with header
-          const availablePageHeight = page === 0 ? maxHeightPerPage : maxHeightPerPage - 7; // Minimal space for header
-          const sourceY = page === 0 ? 0 : (maxHeightPerPage - 7) * page * (canvas.width / imgWidth)
-          const sourceHeight = Math.min(availablePageHeight * (canvas.width / imgWidth), canvas.height - sourceY)
-          
-          const pageCanvas = document.createElement('canvas')
-          const pageCtx = pageCanvas.getContext('2d')
-          pageCanvas.width = canvas.width
-          pageCanvas.height = sourceHeight
-          
-          pageCtx.fillStyle = '#ffffff'
-          pageCtx.fillRect(0, 0, canvas.width, sourceHeight)
-          
-          pageCtx.drawImage(
-            canvas,
-            0, sourceY, canvas.width, sourceHeight,
-            0, 0, canvas.width, sourceHeight
-          )
-          
-          const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.95)
-          const pageImgHeight = (sourceHeight * imgWidth) / canvas.width
-          const yPosition = page === 0 ? margin : 15; // Minimal margin for all pages
-          pdf.addImage(pageImgData, 'JPEG', margin, yPosition, imgWidth, pageImgHeight)
-        }
-      }
-    }
-
-    // Temporarily modify report content to show correct data
-    const originalShowAll = showAllInPDF.value
-    if (!originalShowAll) {
-      // Force show all data for PDF even if paginated view is selected
-      showAllInPDF.value = true
-      await new Promise(resolve => setTimeout(resolve, 500)) // Wait for reactivity
-    }
-
-    // Apply PDF-friendly styles
-    reportElement.classList.add('pdf-export-mode')
-    
-    // Wait for layout and fonts to stabilize
-    await new Promise(resolve => setTimeout(resolve, 800))
-
-    // Capture the entire report
-    await addHtmlToPdf(reportElement, false)
-
-    // Restore original settings
-    reportElement.classList.remove('pdf-export-mode')
-    showAllInPDF.value = originalShowAll
-
-    // Restore hidden elements
-    summaryCards.forEach(card => {
-      card.style.display = ''
-    })
-
-    if (analysisSection && analysisSection.textContent.includes('การวิเคราะห์')) {
-      analysisSection.closest('.mb-8').style.display = ''
-    }
-
-    // Restore pagination controls
-    paginationElements.forEach((el, index) => {
-      if (originalDisplay[index] !== undefined) {
-        el.style.display = originalDisplay[index] || ''
-      }
-    })
-
-    // Save PDF with descriptive filename
-    const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:T]/g, '')
-    const dataSize = originalShowAll ? 'Full' : `Page${currentPage.value}`
-    const fileName = `Electricity_Report_Thai_${dataSize}_${dataToExport.length}HH_${timestamp}.pdf`
-    
-    pdf.save(fileName)
-    
-    const totalPages = pdf.internal.getNumberOfPages()
-    const message = originalShowAll 
-      ? `PDF ดาวน์โหลดเรียบร้อยแล้ว! (${dataToExport.length} ครัวเรือน, ${totalPages} หน้า)`
-      : `PDF ดาวน์โหลดเรียบร้อยแล้ว! (หน้า ${currentPage.value}, ${totalPages} หน้า PDF)`
-    alert(message)
-    
-  } catch (error) {
-    console.error('Error generating PDF:', error)
-    
-    // Restore UI in case of error
-    const reportElement = document.getElementById('report-content')
-    if (reportElement) {
-      reportElement.classList.remove('pdf-export-mode')
-    }
-    
-    alert(`เกิดข้อผิดพลาด: ${error.message}`)
-  } finally {
-    isExporting.value = false
-  }
-}
-
-// Pagination functions
-const nextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++
-  }
-}
-
-const prevPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--
-  }
-}
-
-const goToPage = (page) => {
-  if (page >= 1 && page <= totalPages.value) {
-    currentPage.value = page
-  }
-}
 
 </script>
 
@@ -937,21 +571,59 @@ const goToPage = (page) => {
   font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
 }
 
-/* PDF Export specific styles */
+/* PDF Export specific styles for Government Documents */
 @media print {
+  @page {
+    margin: 2.5cm 2cm 2cm 2cm;
+    size: A4;
+  }
+  
   #report-content {
     box-shadow: none;
-    font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
+    font-family: 'Sarabun', 'TH Sarabun New', sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
   }
   
-  /* Prevent table rows from breaking across pages */
+  /* Government document table styles */
   table {
     page-break-inside: auto;
+    border-collapse: collapse !important;
+    border: 2px solid #000 !important;
+    width: 100% !important;
   }
   
+  /* Prevent row breaking but allow table to span pages */
   tr {
     page-break-inside: avoid;
     page-break-after: auto;
+  }
+  
+  td, th {
+    border: 1px solid #000 !important;
+    page-break-inside: avoid;
+    padding: 8px 4px !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+  }
+  
+  /* Header styles */
+  thead tr th {
+    border: 2px solid #000 !important;
+    background-color: #f0f0f0 !important;
+    font-weight: bold !important;
+    font-size: 13px !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  /* Footer styles */
+  tfoot tr td {
+    border: 2px solid #000 !important;
+    background-color: #f0f0f0 !important;
+    font-weight: bold !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
   
   /* Ensure table headers repeat on each page */
@@ -961,6 +633,30 @@ const goToPage = (page) => {
   
   tbody {
     display: table-row-group;
+  }
+  
+  tfoot {
+    display: table-footer-group;
+  }
+  
+  /* Page numbering */
+  @page {
+    @bottom-center {
+      content: "หน้า " counter(page) " จาก " counter(pages);
+      font-size: 12px;
+      font-family: 'Sarabun', sans-serif;
+    }
+  }
+  
+  /* Government document formatting */
+  h1, h2, h3 {
+    font-weight: bold !important;
+    color: #000 !important;
+  }
+  
+  .signature-line {
+    border-bottom: 1px solid #000 !important;
+    min-height: 40px;
   }
 }
 
@@ -1037,13 +733,113 @@ const goToPage = (page) => {
 .pdf-table td,
 .pdf-table th {
   padding: 8px 12px;
-  border: 1px solid #d1d5db;
+  border: 1px solid #d1d5db !important;
   vertical-align: top;
   word-wrap: break-word;
+  page-break-inside: avoid;
+}
+
+.pdf-table td {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db !important;
+  vertical-align: top;
+  word-wrap: break-word;
+  page-break-inside: avoid;
 }
 
 .pdf-table thead th {
   background-color: #f9fafb;
   font-weight: 600;
+  border: 1px solid #d1d5db !important;
+}
+
+.pdf-table {
+  border-collapse: collapse !important;
+  width: 100% !important;
+  border: 2px solid #374151 !important;
+}
+
+/* Enhanced PDF styles for proper page continuity */
+.pdf-export-mode .pdf-table {
+  border-collapse: collapse !important;
+  border: 2px solid #374151 !important;
+}
+
+.pdf-export-mode .pdf-table td,
+.pdf-export-mode .pdf-table th {
+  border: 1px solid #374151 !important;
+  page-break-inside: avoid;
+  padding: 8px 12px;
+}
+
+.pdf-export-mode .pdf-table thead th {
+  border: 2px solid #374151 !important;
+  background-color: #f9fafb !important;
+  font-weight: 600;
+}
+
+.pdf-export-mode .pdf-table tbody tr:first-child td {
+  border-top: 2px solid #374151 !important;
+}
+
+.pdf-export-mode .pdf-table tbody tr:last-child td {
+  border-bottom: 2px solid #374151 !important;
+}
+
+.pdf-export-mode .pdf-table td:first-child,
+.pdf-export-mode .pdf-table th:first-child {
+  border-left: 2px solid #374151 !important;
+}
+
+.pdf-export-mode .pdf-table td:last-child,
+.pdf-export-mode .pdf-table th:last-child {
+  border-right: 2px solid #374151 !important;
+}
+
+/* Ensure table spans across pages properly */
+.pdf-export-mode table {
+  page-break-before: auto !important;
+  page-break-after: auto !important;
+  page-break-inside: auto !important;
+}
+
+.pdf-export-mode tbody {
+  page-break-before: auto !important;
+  page-break-after: auto !important;
+  page-break-inside: auto !important;
+}
+
+/* Force borders on all sides for page continuity */
+@page {
+  margin: 2cm;
+}
+
+@media print {
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  /* Enhanced table border handling for page breaks */
+  .pdf-table {
+    border-spacing: 0 !important;
+    border-collapse: separate !important;
+    border: 2px solid #374151 !important;
+  }
+  
+  .pdf-table td,
+  .pdf-table th {
+    border: 1px solid #374151 !important;
+    box-sizing: border-box;
+  }
+  
+  /* Force header on every page */
+  .pdf-table thead {
+    display: table-header-group !important;
+  }
+  
+  .pdf-table tbody {
+    display: table-row-group !important;
+  }
 }
 </style>

@@ -1,8 +1,8 @@
-import { extractTokenFromHeader, verifyToken } from '~/lib/jwt'
-import { connectMongoDB } from '~/lib/mongodb'
-import User from '~/models/User'
-import Household from '~/models/Household'
-import { createPredefinedError, createSuccessResponseWithMessages, VALIDATION_DETAILS } from '~/server/utils/responseHandler'
+import { extractTokenFromHeader, verifyToken } from '~/server/utils/jwt'
+import { connectMongoDB } from '~/server/utils/mongodb'
+import User from '~/server/models/User'
+import Household from '~/server/models/Household'
+import { createPredefinedError, createSuccessResponse, VALIDATION_DETAILS } from '~/server/utils/responseHandler'
 
 export default defineEventHandler(async (event) => {
   await connectMongoDB()
@@ -26,9 +26,7 @@ export default defineEventHandler(async (event) => {
       { new: true, runValidators: true }
     )
     
-    return createSuccessResponseWithMessages({
-      data: updatedRole
-    })
+    return createSuccessResponse(updatedRole)
   } catch (error: any) {
     if (error.statusCode) {
       throw error
