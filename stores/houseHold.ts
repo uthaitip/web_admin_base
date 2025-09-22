@@ -83,6 +83,29 @@ export const useHouseholdStore = defineStore('households', {
         this.isLoading = false
       }
     },
+
+    async createHousehold(requestData: BaseRequestData<HouseHoldCreateRequest>) {
+      try {
+        this.$patch(loadingState(requestData))
+        console.log('requestData', requestData);
+
+        const httpClient = useHttpClient()
+        const response = await httpClient.post(
+          API_ENDPOINTS.HOUSEHOLDS.CREATE,
+          requestData.body
+        )
+
+        console.log('response ===> ', response);
+
+        this.$patch(successState(response))
+        return response
+      } catch (error: any) {
+        this.$patch(errorState({ ...(error || {}) }))
+        throw new BaseResponseError(error?.data || error)
+      } finally {
+        this.isLoading = false
+      }
+    }
   }
 
 });

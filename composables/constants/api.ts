@@ -97,6 +97,15 @@ export const API_ENDPOINTS = {
     CREATE: '/households',
     UPDATE: (id: string) => `/households/${id}`,
     DELETE: (id: string) => `/households/${id}`
+  },
+
+  //Address
+  ADDRESSES: {
+    LIST: '/addresses',
+    SHOW: (id: string) => `/addresses/${id}`,
+    CREATE: '/addresses',
+    UPDATE: (id: string) => `/addresses/${id}`,
+    DELETE: (id: string) => `/addresses/${id}`
   }
 } as const
 

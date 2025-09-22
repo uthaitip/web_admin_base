@@ -79,11 +79,26 @@ export default defineEventHandler(async (event) => {
 
     const total = await Household.countDocuments(filter)
 
-    const houseHold = await Household.find(filter)
-    .select('_id houseCode firstName lastName address houseUsage isActive status createdAt updatedAt')
-    .sort({ createdAt: -1 })
-    .skip((page - 1) * limit)
-    .limit(limit)
+    const houseHold = await Household.aggregate([
+      { $match: filter },
+      {
+        $addFields: {
+          _idStr: { $toString: "$_id" }  // 👈 แปลง ObjectId เป็น string
+        }
+      },
+      {
+        $lookup: {
+          from: 'addresses',
+          localField: '_idStr',           // ใช้ _id ที่แปลงแล้วเป็น string
+          foreignField: 'houseHoldId',    // string ของ addresses
+          as: 'address'
+        }
+      },
+      { $unwind: { path: "$address", preserveNullAndEmptyArrays: true } },
+      { $sort: { createdAt: -1 } },
+      { $skip: (page - 1) * limit },
+      { $limit: limit }
+    ]);
 
     return createSuccessResponseWithMessages({
       data: houseHold,

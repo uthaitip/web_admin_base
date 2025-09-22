@@ -20,6 +20,10 @@
           <div class="flex items-center"> {{  row?.firstName }} {{ row?.lastName }}</div>
         </template>
 
+        <template #address="{ row }">
+          <div class="flex items-center"> {{  row?.address?.houseNumber }}</div>
+        </template>
+
         <template #status="{ row }">
           <div class="badge" :class="StatusColor[row?.status]">
             {{ StatusText[row?.status] }}
@@ -81,13 +85,52 @@
             required 
           />
           <BaseInput 
-            v-model="formData.address" 
+            v-model="formData.houseNumber" 
             type="text" 
-            :label="t('demo.demoForm.address')" 
-            :placeholder="t('demo.demoForm.placeholderAddress')" 
-            :error="formErrors.address"
-            min="0" 
-            max="999999" 
+            :label="'บ้านเลขที่'" 
+            :error="formErrors.houseNumber"
+            required 
+          />
+          <BaseInput 
+            v-model="formData.houseNumber" 
+            type="text" 
+            :label="'หมู่ที่'" 
+            :error="formErrors.houseNumber"
+            required 
+          />
+          <BaseInput 
+            v-model="formData.village" 
+            type="text" 
+            :label="'บ้าน'" 
+            :error="formErrors.village"
+            required 
+          />
+          <BaseInput 
+            v-model="formData.subdistrict" 
+            type="text" 
+            :label="'ตำบล'" 
+            :error="formErrors.subdistrict"
+            required 
+          />
+          <BaseInput 
+            v-model="formData.district" 
+            type="text" 
+            :label="'อำเภอ'"
+            :error="formErrors.district"
+            required 
+          />
+          <BaseInput 
+            v-model="formData.province" 
+            type="text" 
+            :label="'จังหวัด'" 
+            :error="formErrors.province"
+            required 
+          />
+          <BaseInput 
+            v-model="formData.zipCode" 
+            type="text" 
+            :label="'รหัสไปรษณีย์'" 
+            :error="formErrors.zipCode"
             required 
           />
         </div>
@@ -118,10 +161,12 @@
 <script setup>
 import { API_ENDPOINTS } from '~/composables/constants/api';
 import { useHouseholdStore } from '~/stores/houseHold';
+import { useAddressStore } from '~/stores/address';
 const { t } = useI18n()
 
 // store 
 const houseHoldStore = useHouseholdStore();
+const addressStore = useAddressStore();
 
 // computed store getters
 const loading = computed(() => houseHoldStore.isLoading);
@@ -205,7 +250,16 @@ const formData = reactive({
   address: '',
   houseUsage: '',
   isActive: 1, 
-  status: 'active'
+  status: 'active', 
+  // address
+  houseNumber: '',
+  houseNumber: '',
+  village: '',
+  subdistrict: '',
+  district: '',
+  province: '',
+  zipCode: ''
+
 })
 
 // Form validation errors
@@ -235,13 +289,13 @@ const validateForm = () => {
   }
 
   // Validate address
-  if(!formData.address.trim()) {
-    formErrors.address = 'กรุณากรอกที่อยู่';
-    isValid = false;
-  }else if (formData.address.trim().length < 2) {
-    formErrors.address = 'ที่อยู่ต้องมีอย่างน้อย 10 ตัวอักษร';
-    isValid = false;
-  }
+  // if(!formData.address.trim()) {
+  //   formErrors.address = 'กรุณากรอกที่อยู่';
+  //   isValid = false;
+  // }else if (formData.address.trim().length < 2) {
+  //   formErrors.address = 'ที่อยู่ต้องมีอย่างน้อย 10 ตัวอักษร';
+  //   isValid = false;
+  // }
   
   // Validate lastName
   if (!formData.lastName.trim()) {
@@ -271,7 +325,6 @@ const validateForm = () => {
 const isFormValid = computed(() => {
   return (formData.firstName || '').trim().length >= 2 && 
          (formData.lastName || '').trim().length >= 2 && 
-         (formData.address || '').trim().length >= 10 && 
          formData.houseUsage && 
          formData.houseUsage >= 0 && 
          formData.houseUsage <= 999999;
@@ -310,8 +363,21 @@ const submitForm = async () => {
   } else {
     if (validateForm()) {
       try {
-        const { post } = useApi();
-        await post(API_ENDPOINTS.HOUSEHOLDS.CREATE, formData);
+
+        const responseHousehold = await houseHoldStore.createHousehold({
+          body: formData
+        });
+
+        console.log('responseHousehold', responseHousehold);
+
+        const responseAddress = await addressStore.createAddress({
+          body: {
+            ...formData,
+            houseHoldId: responseHousehold?.data?.id
+          }
+        })
+        // const { post } = useApi();
+        // await post(API_ENDPOINTS.HOUSEHOLDS.CREATE, formData);
         titleAlertSuccess.value = "บันทึกข้อมูลเรียบร้อยแล้ว";
         alertDemo.value.showSuccess = true;
         await getHouseholdList();
@@ -453,6 +519,16 @@ const openModal = (row = null) => {
     formData.isActive = row.isActive;
     formData.status = row.status;
     formData.id = row._id || row.id;
+    // formData = {
+    //   ...formData,
+    //   ...row
+    // }
+    let dataValue = {
+      ...formData?.address,
+      ...row
+    }
+    Object.assign(formData, dataValue)
+    console.log('dataValue', dataValue);
   } else {
     // Create mode - clear form
     isCreateMode.value = true;

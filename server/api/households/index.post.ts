@@ -1,29 +1,26 @@
 import { connectMongoDB } from '~/server/utils/mongodb'
 import Household from '~/server/models/Household'
-import { createPredefinedError, createSuccessResponse } from '~/server/utils/responseHandler'
+import { createPredefinedError, createSuccessResponse, API_RESPONSE_CODES } from '~/server/utils/responseHandler'
 
 export default defineEventHandler(async (event) => {
   await connectMongoDB()
 
   try {
     const body = await readBody(event)
+    console.log('body', body);
     
     // Validate required fields
-    if (!body.firstName || !body.lastName || !body.address || body.houseUsage === undefined) {
-      throw createPredefinedError('MISSING_REQUIRED_FIELDS', {
-        details: ['firstName', 'lastName', 'address', 'houseUsage']
-      })
-    }
+    // if (!body.firstName || !body.lastName || body.houseUsage === undefined) {
+    //   throw createPredefinedError(API_RESPONSE_CODES.MISSING_REQUIRED_FIELDS)
+    // }
 
     // Validate data types and ranges
-    if (body.houseUsage < 0 || body.houseUsage > 999999) {
-      throw createPredefinedError('VALIDATION_ERROR', {
-        details: ['houseUsage must be between 0 and 999999']
-      })
-    }
+    // if (body.houseUsage < 0 || body.houseUsage > 999999) {
+    //   throw createPredefinedError(API_RESPONSE_CODES.VALIDATION_ERROR)
+    // }
 
     const houseHold = await Household.find()
-        .select('_id firstName lastName address houseUsage isActive status createdAt updatedAt')
+        .select('_id firstName lastName houseUsage isActive status createdAt updatedAt')
         .sort({ createdAt: -1 });
     
     let houseCode = ""
@@ -40,7 +37,6 @@ export default defineEventHandler(async (event) => {
       houseCode: houseCode,
       firstName: body.firstName.trim(),
       lastName: body.lastName.trim(),
-      address: body.address.trim(),
       houseUsage: Number(body.houseUsage),
       isActive: body.isActive !== undefined ? body.isActive : 1,
       status: body.status || 'active'
@@ -63,19 +59,16 @@ export default defineEventHandler(async (event) => {
 
     // Handle validation errors
     if (error.name === 'ValidationError') {
-      const fieldErrors = Object.keys(error.errors)
-      throw createPredefinedError('VALIDATION_ERROR', {
-        details: fieldErrors
-      })
+      throw createPredefinedError(API_RESPONSE_CODES.VALIDATION_ERROR)
     }
 
     // Handle duplicate key errors
     if (error.code === 11000) {
-      throw createPredefinedError('ALREADY_EXISTS')
+      throw createPredefinedError(API_RESPONSE_CODES.ALREADY_EXISTS)
     }
 
     // Log unexpected errors
     console.error('Household creation error:', error)
-    throw createPredefinedError('INTERNAL_ERROR')
+    throw createPredefinedError(API_RESPONSE_CODES.INTERNAL_ERROR)
   }
 })
