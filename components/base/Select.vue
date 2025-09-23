@@ -143,3 +143,13 @@ onMounted(() => {
   }
 })
 </script>
+
+<style scoped>
+select {
+  outline: none !important;
+}
+
+select:focus {
+  outline: none !important;
+}
+</style>

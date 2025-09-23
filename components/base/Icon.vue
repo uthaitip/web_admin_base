@@ -24,15 +24,27 @@ const iconComponent = computed(() => {
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join('') + 'Icon'
   
+  let component
   switch (props.variant) {
     case 'solid':
-      return SolidIcons[iconName as keyof typeof SolidIcons]
+      component = SolidIcons[iconName as keyof typeof SolidIcons]
+      break
     case 'mini':
-      return MiniIcons[iconName as keyof typeof MiniIcons]
+      component = MiniIcons[iconName as keyof typeof MiniIcons]
+      break
     case 'outline':
     default:
-      return OutlineIcons[iconName as keyof typeof OutlineIcons]
+      component = OutlineIcons[iconName as keyof typeof OutlineIcons]
+      break
   }
+  
+  // Fallback to a default icon if the requested icon doesn't exist
+  if (!component) {
+    console.warn(`Icon '${props.name}' not found in ${props.variant} variant, falling back to question-mark-circle`)
+    return OutlineIcons.QuestionMarkCircleIcon
+  }
+  
+  return component
 })
 
 const iconClasses = computed(() => {

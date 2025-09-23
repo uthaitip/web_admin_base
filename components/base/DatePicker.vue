@@ -42,14 +42,14 @@
       @update:model-value="handleDateChange"
       @time-update="handleDateChange"
     >
-    <!-- Only keep the year slot that works -->
-    <template #year="{ value }">
-      {{ value + 543 }}
-    </template>
-    <template #year-overlay-value="{ value }">
-      {{ value + 543 }}
-    </template>
-  </VueDatePicker>
+      <!-- Only keep the year slot that works -->
+      <template #year="{ value }">
+        {{ value + 543 }}
+      </template>
+      <template #year-overlay-value="{ value }">
+        {{ value + 543 }}
+      </template>
+    </VueDatePicker>
     <!-- Helper text -->
     <label class="label" v-if="hint || error">
       <span class="label-text-alt" :class="{ 'text-error': error, 'text-gray-600': !error }">
@@ -66,7 +66,11 @@ import '@vuepic/vue-datepicker/dist/main.css'
 // Remove unused import
 import type { BaseDatePickerProps, TimeObject } from '~/composables/component_models/form'
 
-interface Props extends BaseDatePickerProps {}
+interface Props extends BaseDatePickerProps {
+  type?: 'date' | 'datetime-local' | 'time'
+  size?: 'xs' | 'sm' | 'md' | 'lg'
+  variant?: 'default' | 'bordered' | 'ghost' | 'primary' | 'secondary' | 'accent' | 'info' | 'success' | 'warning' | 'error'
+}
 
 const props = withDefaults(defineProps<Props>(), {
   type: 'date',
@@ -75,16 +79,21 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const $emit = defineEmits<{
-  'update:modelValue': [value: string | Date | TimeObject | null]
+  'update:modelValue': [value: string | null]
   blur: [event: Event]
   focus: [event: Event]
-  change: [event: Event]
+  change: [value: string | null]
 }>()
 
 const inputId = props.id || useId()
 
-// Import useTheme composable for dark theme detection
-const { isDark: isDarkTheme } = useTheme()
+// Simple dark theme detection
+const isDarkTheme = computed(() => {
+  if (process.client) {
+    return document.documentElement.getAttribute('data-theme') === 'dark'
+  }
+  return false
+})
 
 // Convert modelValue to Date for VueDatePicker
 const dateValue = computed({
@@ -181,38 +190,86 @@ const customDateFormatter = computed(() => {
 
 
 const handleDateChange = (value: any) => {
-  // Convert value to proper type
-  let dateValue: Date | string | TimeObject | null = null
+  // Convert value to proper string format
+  let dateValue: string | null = null
   
   if (value) {
     if (value instanceof Date) {
-      dateValue = value
+      // Convert Date to string format based on type
+      if (props.type === 'date') {
+        // Format as yyyy-mm-dd
+        const isoString = value.toISOString().split('T')[0]
+        dateValue = isoString || null
+      } else if (props.type === 'datetime-local') {
+        // Format as yyyy-mm-ddThh:mm
+        const year = value.getFullYear()
+        const month = String(value.getMonth() + 1).padStart(2, '0')
+        const day = String(value.getDate()).padStart(2, '0')
+        const hours = String(value.getHours()).padStart(2, '0')
+        const minutes = String(value.getMinutes()).padStart(2, '0')
+        dateValue = `${year}-${month}-${day}T${hours}:${minutes}`
+      } else {
+        // For other cases, convert Date to ISO string
+        const isoString = value.toISOString().split('T')[0]
+        dateValue = isoString || null
+      }
     } else if (typeof value === 'object' && value.hours !== undefined) {
       // For time picker, keep the time object as-is
       if (props.type === 'time') {
-        dateValue = value
+        // Format as hh:mm
+        const hours = String(value.hours).padStart(2, '0')
+        const minutes = String(value.minutes || 0).padStart(2, '0')
+        dateValue = `${hours}:${minutes}`
       } else {
         // Handle time picker object { hours: 14, minutes: 30 } for datetime
         const today = new Date()
         today.setHours(value.hours || 0, value.minutes || 0, 0, 0)
-        dateValue = today
+        const year = today.getFullYear()
+        const month = String(today.getMonth() + 1).padStart(2, '0')
+        const day = String(today.getDate()).padStart(2, '0')
+        const hours = String(today.getHours()).padStart(2, '0')
+        const minutes = String(today.getMinutes()).padStart(2, '0')
+        dateValue = `${year}-${month}-${day}T${hours}:${minutes}`
       }
     } else if (typeof value === 'object' && (value.hours !== undefined || value.minutes !== undefined)) {
       // Handle partial time object
       if (props.type === 'time') {
-        dateValue = value
+        const hours = String(value.hours || 0).padStart(2, '0')
+        const minutes = String(value.minutes || 0).padStart(2, '0')
+        dateValue = `${hours}:${minutes}`
       } else {
         const today = new Date()
         today.setHours(value.hours || 0, value.minutes || 0, 0, 0)
-        dateValue = today
+        const year = today.getFullYear()
+        const month = String(today.getMonth() + 1).padStart(2, '0')
+        const day = String(today.getDate()).padStart(2, '0')
+        const hours = String(today.getHours()).padStart(2, '0')
+        const minutes = String(today.getMinutes()).padStart(2, '0')
+        dateValue = `${year}-${month}-${day}T${hours}:${minutes}`
       }
     } else if (typeof value === 'string') {
       dateValue = value
     } else {
-      // Try to convert to Date
+      // Try to convert to Date then to string
       try {
-        dateValue = new Date(value)
-        if (isNaN(dateValue.getTime())) {
+        const tempDate = new Date(value)
+        if (!isNaN(tempDate.getTime())) {
+          if (props.type === 'date') {
+            const isoString = tempDate.toISOString().split('T')[0]
+            dateValue = isoString || null
+          } else if (props.type === 'datetime-local') {
+            const year = tempDate.getFullYear()
+            const month = String(tempDate.getMonth() + 1).padStart(2, '0')
+            const day = String(tempDate.getDate()).padStart(2, '0')
+            const hours = String(tempDate.getHours()).padStart(2, '0')
+            const minutes = String(tempDate.getMinutes()).padStart(2, '0')
+            dateValue = `${year}-${month}-${day}T${hours}:${minutes}`
+          } else {
+            // For other cases, convert to ISO string
+            const isoString = tempDate.toISOString().split('T')[0]
+            dateValue = isoString || null
+          }
+        } else {
           dateValue = null
         }
       } catch {
@@ -222,9 +279,7 @@ const handleDateChange = (value: any) => {
   }
   
   $emit('update:modelValue', dateValue)
-  // Emit change event for compatibility
-  const event = new Event('change')
-  $emit('change', event)
+  $emit('change', dateValue)
 }
 
 // Wrapper classes for the entire datepicker

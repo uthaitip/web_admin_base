@@ -329,6 +329,26 @@ const menuSections = ref([
         icon: "server",
       },
       {
+        path: "/example-table",
+        label: "Example Table",
+        icon: "server",
+      },
+      {
+        path: "/example-datepicker",
+        label: "Example datepicker",
+        icon: "server",
+      },
+      {
+        path: "/examples/components",
+        label: "Example full components",
+        icon: "server",
+      },
+      {
+        path: "/example-file-input",
+        label: "Example-file-input",
+        icon: "puzzle-piece",
+      },
+      {
         path: "/admin/components",
         label: "Components",
         icon: "puzzle-piece",

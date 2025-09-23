@@ -46,6 +46,14 @@ export interface FormConfig {
   size?: ComponentSize
 }
 
+// Mask Options Interface
+export interface MaskOptions {
+  mask?: string | Array<string | RegExp>
+  tokens?: Record<string, any>
+  masked?: boolean
+  placeholderChar?: string
+}
+
 // Base Input Props Interface
 export interface BaseInputProps {
   type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'search'
@@ -67,6 +75,9 @@ export interface BaseInputProps {
   min?: number | string
   max?: number | string
   step?: number | string
+  // Mask options
+  mask?: string | Array<string | RegExp>
+  maskOptions?: MaskOptions
 }
 
 // Time object interface for time picker

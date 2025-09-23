@@ -112,7 +112,7 @@
             DatePicker Examples
           </h3>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <BaseDatePicker v-model="dateDemo.date" label="Date Picker" type="date" />
+            <BaseDatePicker v-model="dateDemo.date" label="Date Picker" type="date" @change="handleDateChange" />
             <BaseDatePicker v-model="dateDemo.time" label="Time Picker" type="time" />
             <BaseDatePicker v-model="dateDemo.datetime" label="DateTime Picker" type="datetime-local" />
           </div>
@@ -300,10 +300,85 @@
         </div>
       </div>
     </div>
+
+    <!-- BaseFileInput Component -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <div class="alert alert-info">
+          <BaseIcon name="information-circle" size="md" />
+          <div>
+            <h3 class="font-semibold">BaseFileInput Component</h3>
+            <p class="text-sm">Simple file input component with validation, size variants, and support for single or multiple file selection.</p>
+          </div>
+        </div>
+
+        <!-- File Input Examples -->
+        <div class="bg-base-200 rounded-lg p-4">
+          <h3 class="font-semibold mb-3 flex items-center gap-2">
+            <BaseIcon name="paper-clip" size="sm" />
+            File Input Examples
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <BaseFileInput v-model="fileDemo.single" label="Single File" placeholder="Choose file..." @change="handleFileChange" @file-removed="handleFileRemoved" />
+            <BaseFileInput v-model="fileDemo.multiple" label="Multiple Files" multiple @change="handleMultipleFileChange" @file-removed="handleFileRemoved" />
+            <BaseFileInput v-model="fileDemo.images" label="Images Only" accept="image/*" hint="Only image files are allowed" @file-removed="handleFileRemoved" />
+            <BaseFileInput v-model="fileDemo.documents" label="Documents" accept=".pdf,.doc,.docx" variant="primary" @file-removed="handleFileRemoved" />
+          </div>
+        </div>
+
+        <!-- File Input Variants -->
+        <div class="bg-base-200 rounded-lg p-4">
+          <h3 class="font-semibold mb-3 flex items-center gap-2">
+            <BaseIcon name="swatch" size="sm" />
+            File Input Variants & Sizes
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <BaseFileInput v-model="fileDemo.success" label="Success Variant" variant="success" size="sm" />
+            <BaseFileInput v-model="fileDemo.warning" label="Warning Variant" variant="warning" />
+            <BaseFileInput v-model="fileDemo.error" label="Error Variant" variant="error" error="Please select a valid file" />
+            <BaseFileInput v-model="fileDemo.required" label="Required Field" required hint="This field is required" />
+          </div>
+        </div>
+
+        <!-- File Display -->
+        <div v-if="selectedFiles.length > 0" class="bg-base-200 rounded-lg p-4">
+          <h3 class="font-semibold mb-3 flex items-center gap-2">
+            <BaseIcon name="document-text" size="sm" />
+            Selected Files
+          </h3>
+          <div class="space-y-2">
+            <div v-for="file in selectedFiles" :key="file.name" class="flex items-center gap-3 p-2 bg-base-100 rounded-lg">
+              <BaseIcon name="document" size="sm" class="text-primary" />
+              <div class="flex-1">
+                <p class="text-sm font-medium">{{ file.name }}</p>
+                <p class="text-xs text-base-content/60">{{ formatFileSize(file.size) }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Usage Code -->
+        <div class="bg-base-200 rounded-lg p-4">
+          <h3 class="font-semibold mb-3 flex items-center gap-2">
+            <BaseIcon name="code-bracket" size="sm" />
+            Usage Examples
+          </h3>
+          <div class="mockup-code text-sm">
+            <pre data-prefix="1"><code>&lt;BaseFileInput v-model="files" label="Upload File" /&gt;</code></pre>
+            <pre data-prefix="2"><code>&lt;BaseFileInput v-model="images" accept="image/*" multiple /&gt;</code></pre>
+            <pre data-prefix="3"><code>&lt;BaseFileInput accept=".pdf,.doc" variant="primary" required /&gt;</code></pre>
+            <pre data-prefix="4"><code>&lt;BaseFileInput @change="handleFileChange" @file-removed="handleFileRemoved" /&gt;</code></pre>
+            <pre data-prefix="5"><code>&lt;BaseFileInput :show-file-list="false" /&gt; // Hide file list</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
+import { ref, computed } from 'vue'
+
 // Props for demo data from parent
 const props = defineProps({
   inputDemo: { type: Object, required: true },
@@ -314,6 +389,69 @@ const props = defineProps({
   selectDemo: { type: Object, required: true },
   selectOptions: { type: Array, required: true },
   autocompleteDemo: { type: Object, required: true },
-  autocompleteOptions: { type: Array, required: true }
+  autocompleteOptions: { type: Array, required: true },
+  fileDemo: { type: Object, required: true }
 })
+
+// File demo state
+const selectedFiles = ref([])
+
+// File handling methods
+const handleFileChange = (files) => {
+  console.log('Single file selected:', files)
+  updateSelectedFiles()
+}
+
+const handleMultipleFileChange = (files) => {
+  console.log('Multiple files selected:', files)
+  updateSelectedFiles()
+}
+
+const handleFileRemoved = (file, index) => {
+  console.log('File removed:', file.name, 'at index:', index)
+  updateSelectedFiles()
+}
+
+// Update combined selected files from all file inputs
+const updateSelectedFiles = () => {
+  const allFiles = []
+  
+  Object.values(props.fileDemo).forEach(fileList => {
+    if (fileList) {
+      if (Array.isArray(fileList)) {
+        allFiles.push(...fileList)
+      } else if (fileList.length) {
+        allFiles.push(...Array.from(fileList))
+      }
+    }
+  })
+  
+  selectedFiles.value = allFiles
+}
+
+// Utility function to format file size
+const formatFileSize = (bytes) => {
+  if (bytes === 0) return '0 B'
+  
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`
+}
+
+const handleDateChange = (value) => {
+  console.log('Date changed:', value)
+} 
+
 </script>
+
+<style scoped>
+input, textarea, select {
+  outline: none !important;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none !important;
+}
+</style>

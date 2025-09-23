@@ -8,8 +8,34 @@
       </span>
     </label>
     
-    <!-- Input -->
+    <!-- Masked Input -->
     <input
+      v-if="mask"
+      :id="inputId"
+      :name="name"
+      :type="type"
+      :value="modelValue"
+      :placeholder="placeholder"
+      :disabled="disabled"
+      :readonly="readonly"
+      :autocomplete="autocomplete"
+      :maxlength="maxlength"
+      :minlength="minlength"
+      :min="min"
+      :max="max"
+      :step="step"
+      :class="inputClasses"
+      v-mask="maskConfig"
+      novalidate
+      @input="handleInput"
+      @blur="handleBlur"
+      @focus="handleFocus"
+      @change="handleChange"
+    />
+    
+    <!-- Regular Input -->
+    <input
+      v-else
       :id="inputId"
       :name="name"
       :type="type"
@@ -42,7 +68,8 @@
 
 <script setup lang="ts">
 import { computed, useId } from 'vue'
-import type { BaseInputProps } from '~/composables/component_models/form'
+import { mask as vMask } from 'vue-the-mask'
+import type { BaseInputProps, MaskOptions } from '~/composables/component_models/form'
 
 interface Props extends BaseInputProps {}
 
@@ -50,6 +77,26 @@ const props = withDefaults(defineProps<Props>(), {
   type: 'text',
   size: 'md',
   variant: 'default'
+})
+
+// Mask configuration
+const maskConfig = computed(() => {
+  if (!props.mask) return null
+  
+  // If mask is a string, return it directly
+  if (typeof props.mask === 'string') {
+    return props.mask
+  }
+  
+  // If mask is an array or has additional options
+  if (props.maskOptions) {
+    return {
+      mask: props.mask,
+      ...props.maskOptions
+    }
+  }
+  
+  return props.mask
 })
 
 const emit = defineEmits<{
@@ -198,3 +245,13 @@ const handleChange = (event: Event) => {
   emit('change', event)
 }
 </script>
+
+<style scoped>
+input {
+  outline: none !important;
+}
+
+input:focus {
+  outline: none !important;
+}
+</style>

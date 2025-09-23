@@ -41,8 +41,8 @@
           <BaseIcon name="clipboard-document" size="lg" />
         </div>
         <div class="stat-title text-xs">Form</div>
-        <div class="stat-value text-2xl">7</div>
-        <div class="stat-desc text-xs opacity-70 truncate">Input, Textarea, DatePicker, Checkbox, Radio, Select, Autocomplete</div>
+        <div class="stat-value text-2xl">8</div>
+        <div class="stat-desc text-xs opacity-70 truncate">Input, Textarea, DatePicker, Checkbox, Radio, Select, Autocomplete, FileInput</div>
       </div>
       <div class="stat bg-base-100 shadow-md rounded-box p-4">
         <div class="stat-figure text-accent opacity-60">
@@ -348,6 +348,7 @@
         :select-options="selectOptions"
         :autocomplete-demo="autocompleteDemo"
         :autocomplete-options="autocompleteOptions"
+        :file-demo="fileDemo"
       />
 
       <!-- Layout Components Tab -->
@@ -548,6 +549,17 @@ const autocompleteOptions = [
   { label: 'Cherry', value: 'cherry', id: 3, name: 'Cherry' },
   { label: 'Orange', value: 'orange', id: 4, name: 'Orange' }
 ]
+
+const fileDemo = ref({
+  single: null,
+  multiple: null,
+  images: null,
+  documents: null,
+  success: null,
+  warning: null,
+  error: null,
+  required: null
+})
 
 // Pagination demo
 const paginationDemo = ref({

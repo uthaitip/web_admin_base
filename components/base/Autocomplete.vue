@@ -412,3 +412,13 @@ onUnmounted(() => {
   }
 })
 </script>
+
+<style scoped>
+input {
+  outline: none !important;
+}
+
+input:focus {
+  outline: none !important;
+}
+</style>

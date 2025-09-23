@@ -43,7 +43,7 @@
         </tr>
         
         <!-- Empty State -->
-        <tr v-else-if="!data || data.length === 0">
+        <tr v-else-if="!displayData || displayData.length === 0">
           <td :colspan="totalColumns" class="text-center py-8 text-base-content/60">
             <div class="flex flex-col items-center gap-3">
               <BaseIcon v-if="emptyIcon" :name="emptyIcon" size="xl" class="text-base-content/30" />
@@ -58,7 +58,7 @@
         <!-- Data Rows -->
         <tr 
           v-else 
-          v-for="(row, index) in data" 
+          v-for="(row, index) in displayData" 
           :key="getRowKey(row, index)"
           :class="getRowClasses(row, index)"
           @click="handleRowClick(row, index)"
@@ -101,6 +101,17 @@
         </tr>
       </tbody>
     </table>
+    <div class="p-4">
+        <BasePagination
+          v-if="dataPage"
+          :currentPage="dataPage.currentPage || 1"
+          :totalPages="dataPage.totalPages || 1"
+          :totalItems="dataPage.totalItems || 0"
+          :pageSize="dataPage.pageSize || 10"
+          @update:currentPage="handlePageChange"
+          @update:pageSize="handlePageSizeChange"
+        />
+    </div>
   </div>
 </template>
 
@@ -136,6 +147,7 @@ interface Props {
   sortOrder?: 'asc' | 'desc'
   showEdit?: boolean
   showDelete?: boolean
+  dataPage?: any
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -160,6 +172,8 @@ const emits = defineEmits<{
   rowClick: [row: any, index: number]
   edit: [row: any, index: number]
   delete: [row: any, index: number]
+  pageChange: [page: number]
+  pageSizeChange: [size: number]
 }>()
 
 // Reactive data
@@ -196,6 +210,15 @@ const hasActions = computed(() => {
   return props.showEdit || props.showDelete || Boolean(slots?.actions)
 })
 
+const displayData = computed(() => {
+  // ถ้ามี dataPage แสดงว่าใช้ pagination ให้แสดงข้อมูลจาก dataPage
+  if (props.dataPage && props.dataPage.data) {
+    return props.dataPage.data
+  }
+  // ถ้าไม่มี dataPage ให้แสดงข้อมูลจาก data prop ปกติ
+  return props.data || []
+})
+
 // Methods
 const getValue = (row: any, key: string) => {
   return key.split('.').reduce((obj, k) => obj?.[k], row)
@@ -223,7 +246,7 @@ const getRowKey = (row: any, index: number) => {
   return getValue(row, props.rowKey) || index
 }
 
-const getRowClasses = (row: any, index: number) => {
+const getRowClasses = (_row: any, _index: number) => {
   const classes = []
   
   if (props.hoverable && (props.clickableRows || hasActions.value)) {
@@ -263,6 +286,14 @@ const handleRowClick = (row: any, index: number) => {
   if (props.clickableRows) {
     emits('rowClick', row, index)
   }
+}
+
+const handlePageChange = (page: number) => {
+  emits('pageChange', page)
+}
+
+const handlePageSizeChange = (size: number) => {
+  emits('pageSizeChange', size)
 }
 
 // Expose slots for checking

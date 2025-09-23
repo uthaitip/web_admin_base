@@ -117,3 +117,13 @@ const textareaClasses = computed(() => {
   return baseClasses
 })
 </script>
+
+<style scoped>
+textarea {
+  outline: none !important;
+}
+
+textarea:focus {
+  outline: none !important;
+}
+</style>
